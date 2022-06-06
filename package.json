@@ -1,0 +1,21 @@
+{
+  "name": "stopsopa__playwright-research",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stopsopa/playwright-research.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stopsopa/playwright-research/issues"
+  },
+  "homepage": "https://github.com/stopsopa/playwright-research#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.22.2"
+  }
+}
