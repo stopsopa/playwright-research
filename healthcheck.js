@@ -26,11 +26,10 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 (async function () {
   let res;
   try {
-
     // await delay(4000);
 
     res = await lightFetch(url, {
-      debugRequest: 'all',
+      debugRequest: "all",
       timeout: 3000,
     });
 
