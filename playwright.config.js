@@ -94,6 +94,7 @@ const config = {
     //   },
     // },
   ],
+  reporter: [ ['html', { open: 'never' }] ], // from: https://github.com/microsoft/playwright/issues/11773#issuecomment-1026742482
 
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   // outputDir: 'test-results/',
