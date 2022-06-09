@@ -6,8 +6,13 @@ local_app_and_tests:
 	npx playwright test --headed --forbid-only
 local_app_and_tests_chromium:
 	npx playwright test --headed --forbid-only --project=chromium --workers=1
+
 # https://playwright.dev/docs/inspector#open-playwright-inspector
+# https://playwright.dev/docs/inspector#stepping-through-the-playwright-script
 inspect:
 	PWDEBUG=1 npx playwright test --headed --forbid-only --project=chromium --workers=1
+
+codegen:
+	npx playwright codegen wikipedia.org
 
 

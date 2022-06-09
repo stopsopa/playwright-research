@@ -94,7 +94,6 @@ const config = {
     //   },
     // },
   ],
-  reporter: [ ['html', { open: 'never' }] ], // from: https://github.com/microsoft/playwright/issues/11773#issuecomment-1026742482
 
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   // outputDir: 'test-results/',
@@ -104,6 +103,8 @@ const config = {
   //   command: 'npm run start',
   //   port: 3000,
   // },
+
+  reporter: [["html", { open: "never" }]], // or CI=1 from: https://github.com/microsoft/playwright/issues/11773#issuecomment-1026742482
 };
 
 module.exports = config;
