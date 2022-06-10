@@ -31,7 +31,6 @@
   "dependencies": {
     "dotenv": "^16.0.0",
     "express": "^4.17.2",
-    "nlab": "^0.0.122",
     "serve-index": "^1.9.1"
   }
 }

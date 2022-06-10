@@ -2,12 +2,6 @@
 const { devices } = require("@playwright/test");
 
 /**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// require('dotenv').config();
-
-/**
  * @see https://playwright.dev/docs/test-configuration
  * @type {import('@playwright/test').PlaywrightTestConfig}
  */
@@ -31,7 +25,8 @@ const config = {
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: "html",
+  reporter: [["html", { open: "never" }]], // or CI=1 from: https://github.com/microsoft/playwright/issues/11773#issuecomment-1026742482
+
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
@@ -103,8 +98,13 @@ const config = {
   //   command: 'npm run start',
   //   port: 3000,
   // },
-
-  reporter: [["html", { open: "never" }]], // or CI=1 from: https://github.com/microsoft/playwright/issues/11773#issuecomment-1026742482
 };
+
+/**
+ * Above just standard default config, and below we will modify it the way we need
+ */
+const cmd = require("./tests/tools/cmd");
+
+const json = cmd(["node", "playwright-async.config.js"]);
 
 module.exports = config;
