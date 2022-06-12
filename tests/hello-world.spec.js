@@ -8,7 +8,7 @@ test("basic test", async ({ page }) => {
   await expect(title).toHaveText("Playwright");
 
   // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Pldaywright/);
+  await expect(page).toHaveTitle(/Playwright/);
 
   // Expect an attribute "to be strictly equal" to the value.
   await expect(page.locator('text=Get Started').first()).toHaveAttribute('href', '/docs/intro');

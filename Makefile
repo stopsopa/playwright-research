@@ -9,6 +9,7 @@ local_app_and_tests_chromium:
 
 # https://playwright.dev/docs/inspector#open-playwright-inspector
 # https://playwright.dev/docs/inspector#stepping-through-the-playwright-script
+# https://playwright.dev/docs/debug#playwright-inspector
 inspect:
 	PWDEBUG=1 npx playwright test --headed --forbid-only --project=chromium --workers=1
 
