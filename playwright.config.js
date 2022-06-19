@@ -24,10 +24,8 @@ function envcheck(name, ret) {
 }
 
 if (envcheck("BASE_URL", true)) {
-
-  console.log(`existing BASE_URL: >${process.env.BASE_URL}<`)
-}
-else {
+  console.log(`existing BASE_URL: >${process.env.BASE_URL}<`);
+} else {
   envcheck("PW_SCHEMA");
 
   envcheck("PW_HOST");
@@ -39,11 +37,10 @@ else {
   process.env.BASE_URL = `${process.env.PW_SCHEMA}://${process.env.PW_HOST}`;
 
   if (envcheck("PW_PORT", true)) {
-
     process.env.BASE_URL += `:${process.env.PW_PORT}`;
   }
 
-  console.log(`generated BASE_URL: >${process.env.BASE_URL}<`)
+  console.log(`generated BASE_URL: >${process.env.BASE_URL}<`);
 }
 
 envcheck("BASE_URL");
@@ -55,9 +52,12 @@ if (!protocolRegex.test(process.env.BASE_URL)) {
 /**
  * @see https://playwright.dev/docs/test-configuration
  * @type {import('@playwright/test').PlaywrightTestConfig}
+ *
+ * Read more: https://playwright.dev/docs/api/class-testconfig
  */
 const config = {
   testDir: "./tests",
+  snapshotDir: "./var/snapshotDir",
   /* Maximum time one test can run for. */
   timeout: 30 * 1000,
   expect: {
@@ -80,6 +80,13 @@ const config = {
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
+    /**
+     *
+     * https://playwright.dev/docs/api/class-testoptions
+     * https://playwright.dev/docs/api/class-testproject
+     *
+     */
+
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
     /* Base URL to use in actions like `await page.goto('/')`. */

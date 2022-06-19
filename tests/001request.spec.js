@@ -4,7 +4,7 @@ const { test, expect } = require("@playwright/test");
  * https://playwright.dev/docs/api/class-request
  */
 test.describe("", () => {
-  test("basic test", async ({ page, browserName }) => {
+  test("basic test", async ({ page, browserName }) => { // more objects, not only page, browserName: https://playwright.dev/docs/api/class-fixtures
     const buff = [];
 
     page.on("request", async (request) => {
