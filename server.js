@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 const express = require("express");
+
 const serveIndex = require("serve-index");
 
 const log = (function () {
@@ -33,13 +34,9 @@ function check(val, name) {
   }
 }
 
-check(process.env.HOST, "HOST");
+check(process.env.PW_HOST, "PW_HOST");
 
-check(process.env.PORT, "PORT");
-
-const host = process.env.HOST;
-
-const port = process.env.PORT;
+check(process.env.PW_PORT, "PW_PORT");
 
 const web = path.resolve(__dirname, "docs");
 
@@ -115,7 +112,7 @@ app.use(
   serveIndex(web, { icons: true })
 );
 
-app.listen(port, host, () => {
-  console.log(`\n 🌎  Server is running ` + `http://${host}:${port}\n`);
+app.listen(process.env.PW_PORT, process.env.PW_HOST, () => {
+  console.log(`\n 🌎  Server is running ` + `http://${process.env.PW_HOST}:${process.env.PW_PORT}\n`);
   ready = true;
 });

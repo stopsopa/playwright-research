@@ -12,6 +12,8 @@ local_app_and_tests_chromium:
 # https://playwright.dev/docs/debug#playwright-inspector
 inspect:
 	PWDEBUG=1 npx playwright test --headed --forbid-only --project=chromium --workers=1
+#	PWDEBUG=console		read more: https://playwright.dev/docs/debug#run-in-debug-mode
+#	DEBUG=pw:api  		read more: https://playwright.dev/docs/debug#verbose-api-logs
 
 codegen:
 	npx playwright codegen wikipedia.org

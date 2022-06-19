@@ -1,6 +1,57 @@
 // @ts-check
 const { devices } = require("@playwright/test");
 
+const th = (msg) => new Error(`playwright.config.js error: ${msg}`);
+
+const protocolRegex = /^https?:\/\//;
+
+require("dotenv").config();
+
+function envcheck(name, ret) {
+  if (typeof process.env[name] !== "string") {
+    if (ret) return false;
+
+    throw th(`process.env.${name} is not a string`);
+  }
+
+  if (!process.env[name].trim()) {
+    if (ret) return false;
+
+    throw th(`process.env.${name} is an ampty string`);
+  }
+
+  return true;
+}
+
+if (envcheck("BASE_URL", true)) {
+
+  console.log(`existing BASE_URL: >${process.env.BASE_URL}<`)
+}
+else {
+  envcheck("PW_SCHEMA");
+
+  envcheck("PW_HOST");
+
+  if (!["http", "https"].includes(process.env.PW_SCHEMA)) {
+    throw th(`process.env.PW_SCHEMA should be http or https`);
+  }
+
+  process.env.BASE_URL = `${process.env.PW_SCHEMA}://${process.env.PW_HOST}`;
+
+  if (envcheck("PW_PORT", true)) {
+
+    process.env.BASE_URL += `:${process.env.PW_PORT}`;
+  }
+
+  console.log(`generated BASE_URL: >${process.env.BASE_URL}<`)
+}
+
+envcheck("BASE_URL");
+
+if (!protocolRegex.test(process.env.BASE_URL)) {
+  throw th(`process.env.BASE_URL don't match ${protocolRegex}`);
+}
+
 /**
  * @see https://playwright.dev/docs/test-configuration
  * @type {import('@playwright/test').PlaywrightTestConfig}
@@ -33,9 +84,18 @@ const config = {
     actionTimeout: 0,
     /* Base URL to use in actions like `await page.goto('/')`. */
     // baseURL: 'http://localhost:3000',
+    baseURL: process.env.BASE_URL,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
+
+    // extraHTTPHeaders: { // from: https://playwright.dev/docs/test-api-testing#configuration
+    //   // We set this header per GitHub guidelines.
+    //   Accept: "application/vnd.github.v3+json",
+    //   // Add authorization token to all requests.
+    //   // Assuming personal access token available in the environment.
+    //   Authorization: `token ${process.env.API_TOKEN}`,
+    // },
   },
 
   /* Configure projects for major browsers */

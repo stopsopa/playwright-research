@@ -14,9 +14,9 @@ require("dotenv").config({
   path: env,
 });
 
-const host = process.env.HOST;
+const host = process.env.PW_HOST;
 
-const port = process.env.PORT;
+const port = process.env.PW_PORT;
 
 // const url = `http://${host}:${port}/ready?timeout=2000`;
 const url = `http://${host}:${port}/ready`;
