@@ -15,6 +15,10 @@ inspect:
 #	PWDEBUG=console		read more: https://playwright.dev/docs/debug#run-in-debug-mode
 #	DEBUG=pw:api  		read more: https://playwright.dev/docs/debug#verbose-api-logs
 
+# from: https://github.com/microsoft/playwright/issues/7035
+watch:
+	node node_modules/.bin/chokidar 'tests/**/*.spec.js' --initial -c 'npx playwright test --headed --forbid-only --project=chromium --workers=1 --retries=0 tests/001request.spec.js'
+
 codegen:
 	npx playwright codegen wikipedia.org
 

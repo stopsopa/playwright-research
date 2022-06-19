@@ -14,5 +14,8 @@
 # cmd
 - https://playwright.dev/docs/intro#command-line
 
+# watch mode
+https://github.com/microsoft/playwright/issues/7035
+
 # last read doc page
 

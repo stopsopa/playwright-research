@@ -38,7 +38,7 @@ check(process.env.PW_HOST, "PW_HOST");
 
 check(process.env.PW_PORT, "PW_PORT");
 
-const web = path.resolve(__dirname, "docs");
+const web = path.resolve(__dirname, "public");
 
 const app = express();
 
@@ -48,6 +48,8 @@ let ready = false;
 
 app.use((req, res, next) => {
   console.log(`${req.method}: ${req.url}`);
+
+  res.set("X-special", "default");
 
   next();
 });
@@ -89,6 +91,7 @@ app.all("/redirect", (req, res) => {
 });
 
 app.all("/007redirect", (req, res) => {
+  res.set("X-special", "redirect...");
   res.redirect("/007landingpage.html");
 });
 
