@@ -164,7 +164,7 @@ test.describe("", () => {
             "x-special": "default",
           },
         ],
-        browserName === "webkit" ? false : ["requestfinished", "en-US"],
+        browserName === "webkit" ? false : ["requestfinished", "en-US"], // does not fire for webkit
       ].filter(Boolean)
     );
   });
