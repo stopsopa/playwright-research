@@ -10,6 +10,7 @@
 - [Skip test - conditions](https://playwright.dev/docs/test-annotations#conditionally-skip-a-group-of-tests)
 - [Emulate geolocation](https://playwright.dev/docs/codegen#emulate-geolocation-language-and-timezone)
 - [slowMo](https://playwright.dev/docs/debug#run-in-headed-mode)
+- [as a lib](as-a-lib.js) -> [from](https://playwright.dev/docs/api/class-page#page-event-request-failed)
 
 # cmd
 - https://playwright.dev/docs/intro#command-line
