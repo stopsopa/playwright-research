@@ -26,3 +26,7 @@ https://github.com/microsoft/playwright/issues/7035
 
 # last read doc page
 https://playwright.dev/docs/intro
+
+# todo
+- [ ] integrate with GH Actions
+- [ ] build some example tests
