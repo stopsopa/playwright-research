@@ -25,4 +25,7 @@ watch:
 codegen:
 	npx playwright codegen wikipedia.org
 
+# proof that playwright can be used as a library
+asalib:
+	node as-a-lib.js
 

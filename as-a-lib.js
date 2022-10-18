@@ -4,7 +4,7 @@ const {
 } = require("@playwright/test"); // webkit | chromium | firefox
 
 /**
- * https://playwright.dev/docs/api/class-page#page-event-request-failed
+ * https://playwright.dev/docs/api/class-page
  */
 (async () => {
   const browser = await chromium.launch({ headless: false });
@@ -24,6 +24,7 @@ const {
     console.log("msg:", dialog.message());
     await dialog.dismiss();
   });
+
   await page.evaluate(() => alert("198"));
 
   await browser.close();

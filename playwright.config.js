@@ -113,20 +113,22 @@ const config = {
         ...devices["Desktop Chrome"],
       },
     },
-
     {
       name: "firefox",
       use: {
         ...devices["Desktop Firefox"],
       },
     },
+    // { // too much problems with running tests - commenting out
+    //   name: "webkit",
+    //   use: {
+    //     ...devices["Desktop Safari"],
+    //   },
+    // },
 
-    {
-      name: "webkit",
-      use: {
-        ...devices["Desktop Safari"],
-      },
-    },
+
+
+
 
     /* Test against mobile viewports. */
     // {
