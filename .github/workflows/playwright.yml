@@ -16,7 +16,7 @@ jobs:
     - name: yarn install
       run: yarn
     - name: install chromium
-      run: npx playwright install chromium --with-deps
+      run: npx playwright install chromium
     - name: playwright tests
       run: |
-        npx playwright test --headed --forbid-only --project=chromium --workers=1
+        npx playwright test --forbid-only --project=chromium --workers=1
