@@ -47,3 +47,5 @@ jobs:
       - name: playwright tests
         run: |
           npx playwright test --forbid-only --project=firefox --workers=1
+
+# https://playwright.dev/docs/ci          
