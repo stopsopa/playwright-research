@@ -15,6 +15,8 @@ jobs:
         node-version: '18.11.0'
     - name: yarn install
       run: yarn
+    - name: install chromium
+      run: npx playwright install chromium
     - name: playwright tests
       run: |
         npx playwright test --headed --forbid-only --project=chromium --workers=1
