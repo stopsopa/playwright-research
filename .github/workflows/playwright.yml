@@ -13,8 +13,8 @@ jobs:
       matrix:
         version: [16, 17, 18] # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.version }}
       - name: yarn install
@@ -34,8 +34,8 @@ jobs:
       matrix:
         version: [16, 17, 18]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.version }}
       - name: yarn install
