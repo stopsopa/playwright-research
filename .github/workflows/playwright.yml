@@ -17,6 +17,8 @@ jobs:
       run: yarn
     - name: install chromium
       run: npx playwright install chromium
+    - name: run server
+      run: node server.js &
     - name: playwright tests
       run: |
         npx playwright test --forbid-only --project=chromium --workers=1
