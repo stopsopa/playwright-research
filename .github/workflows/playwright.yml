@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [ main, master ]
 jobs:
-  test:
+  chromium:
     timeout-minutes: 60
     runs-on: ubuntu-20.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
     steps:
@@ -22,3 +22,20 @@ jobs:
     - name: playwright tests
       run: |
         npx playwright test --forbid-only --project=chromium --workers=1
+  firefox:
+    timeout-minutes: 60
+    runs-on: ubuntu-20.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '18.11.0'
+    - name: yarn install
+      run: yarn
+    - name: install firefox
+      run: npx playwright install firefox
+    - name: run server
+      run: node server.js &
+    - name: playwright tests
+      run: |
+        npx playwright test --forbid-only --project=firefox --workers=1
