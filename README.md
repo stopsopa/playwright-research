@@ -30,3 +30,4 @@ https://playwright.dev/docs/intro
 # todo
 - [ ] integrate with GH Actions
 - [ ] build some example tests
+- [ ] make docker image version package.json '@playwright/test' driven

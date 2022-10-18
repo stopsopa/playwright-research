@@ -1,41 +1,49 @@
 name: Playwright Tests
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 jobs:
   chromium:
     timeout-minutes: 60
     runs-on: ubuntu-20.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [16, 17, 18] # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: '18.11.0'
-    - name: yarn install
-      run: yarn
-    - name: install chromium
-      run: npx playwright install chromium
-    - name: run server
-      run: node server.js &
-    - name: playwright tests
-      run: |
-        npx playwright test --forbid-only --project=chromium --workers=1
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.version }}
+      - name: yarn install
+        run: yarn
+      - name: install chromium
+        run: npx playwright install chromium
+      - name: run server
+        run: node server.js &
+      - name: playwright tests
+        run: |
+          npx playwright test --forbid-only --project=chromium --workers=1
   firefox:
     timeout-minutes: 60
-    runs-on: ubuntu-20.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [16, 17, 18]
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: '18.11.0'
-    - name: yarn install
-      run: yarn
-    - name: install firefox
-      run: npx playwright install firefox
-    - name: run server
-      run: node server.js &
-    - name: playwright tests
-      run: |
-        npx playwright test --forbid-only --project=firefox --workers=1
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.version }}
+      - name: yarn install
+        run: yarn
+      - name: install firefox
+        run: npx playwright install firefox
+      - name: run server
+        run: node server.js &
+      - name: playwright tests
+        run: |
+          npx playwright test --forbid-only --project=firefox --workers=1
