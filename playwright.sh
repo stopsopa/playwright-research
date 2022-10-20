@@ -27,6 +27,19 @@ esac
 
 cd "${_DIR}"
 
+GRAY=$(tput setaf 244)
+BLACK=$(tput setaf 0)
+RED=$(tput setaf 1)
+GREEN=$(tput setaf 2)
+YELLOW=$(tput setaf 3)
+BLUE=$(tput setaf 4)
+MAGENTA=$(tput setaf 5)
+CYAN=$(tput setaf 6)
+WHITE=$(tput setaf 7)
+BOLD=$(tput bold)
+REVERSE=$(tput rev)
+RESET=$(tput sgr0)
+
 function quote {
   echo "$1" | sed -E 's/\"/\\"/g'
 }
@@ -127,36 +140,37 @@ if [ "${_HELP}" = "1" ]; then
 
 cat <<EOF
 
-/bin/bash playwright.sh --target local -- ... rest of params for playwright  
-    # by default
-/bin/bash playwright.sh --target docker -- ... rest of params for playwright  
+${YELLOW}/bin/bash playwright.sh ${BOLD}--target local${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}  
+    # ${BOLD}--target local${RESET} is actually by default, so you don't really need to specify --target to launch on "local"
+    # but you have to specify it if you want to launch test in docker using ${BOLD}--target docker${RESET}
+${YELLOW}/bin/bash playwright.sh ${BOLD}--target docker${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}
 
-/bin/bash playwright.sh --headless -- ... rest of params for playwright
-    # it's here because --headed is added by default (by default in "--target local" but not in "--target docker")
+${YELLOW}/bin/bash playwright.sh ${BOLD}--headless${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}
+    # it's here because ${BOLD}--headed${RESET} is added by default (by default in "--target local" but not in "--target docker")
     # WARNING: be aware that this is params only handled/consumed by this script only 
 
-/bin/bash playwright.sh --allow-only -- ... rest of params for playwright
-    # it's here because --forbid-only is added by default
+${YELLOW}/bin/bash playwright.sh ${BOLD}--allow-only${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}
+    # it's here because ${BOLD}--forbid-only${RESET} is added by default
     # WARNING: be aware that this is params only handled/consumed by this script only 
 
-/bin/bash playwright.sh -- --workers=5
-    # this will override hardcoded --workers=1 (which is added by default)
+${YELLOW}/bin/bash playwright.sh -- ${BOLD}--workers=5${RESET}
+    # this will override hardcoded ${BOLD}--workers=1${RESET} (which is added by default)
 
-/bin/bash playwright.sh --project firefox -- ... rest of params for playwright    
+${YELLOW}/bin/bash playwright.sh ${BOLD}--project firefox${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET} 
     or
-/bin/bash playwright.sh --project all -- ... rest of params for playwright
+${YELLOW}/bin/bash playwright.sh ${BOLD}--project all${RESET} -- ... optionally other native params for playwright${RESET}
     # WARNING: --project param given to playwright.sh should have format:
-    #               --project firefox
+    #               ${BOLD}--project firefox${RESET}
     #                   not
-    #               --project=firefox
-    # it's here because --project chromium is added by default
-    # --project firefox   - this will change browser to firefox
-    # --project all       - this will launch against all registered browsers
+    #               ${BOLD}--project=firefox${RESET}
+    # it's here because ${BOLD}--project chromium${RESET} is added by default
+    # ${BOLD}--project firefox${RESET}   - this will change browser to firefox
+    # ${BOLD}--project all${RESET}       - this will launch against all registered browsers
     # WARNING: be aware that this is params only handled/consumed by this script only 
         # there is one edge case
-            /bin/bash playwright.sh --project all -- --project=firefox ... rest of params for playwright
+            /bin/bash playwright.sh ${BOLD}--project all${RESET} -- ${BOLD}--project=firefox${RESET} ... optionally other native params for playwright
                 this is the same as 
-            /bin/bash playwright.sh --project firefox -- ... rest of params for playwright
+            /bin/bash playwright.sh ${BOLD}--project firefox${RESET} -- ... optionally other native params for playwright
 
 EOF
 
@@ -209,7 +223,6 @@ if [ "${_TARGET}" = "docker" ]; then
     
     exit 0
 fi
-
 
 echo "${0} error: unhandled --target '${_TARGET}'"
 
