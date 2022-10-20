@@ -65,6 +65,25 @@ jobs:
         run: node server.js &
       - name: playwright tests
         run: |
-          /bin/bash playwright.sh -t docker
+          /bin/bash playwright.sh -t docker --project=chromium
+  ubuntu-docker-firefox:
+    timeout-minutes: 60
+    runs-on: ubuntu-20.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [16, 17, 18] # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.version }}
+      - name: yarn install
+        run: yarn
+      - name: run server
+        run: node server.js &
+      - name: playwright tests
+        run: |
+          /bin/bash playwright.sh -t docker --project=firefox
 
 # https://playwright.dev/docs/ci          
