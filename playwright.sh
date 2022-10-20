@@ -132,7 +132,7 @@ cat <<EOF
 /bin/bash playwright.sh --target docker -- ... rest of params for playwright  
 
 /bin/bash playwright.sh --headless -- ... rest of params for playwright
-    # it's here because --headed is added by default
+    # it's here because --headed is added by default (by default in "--target local" but not in "--target docker")
     # WARNING: be aware that this is params only handled/consumed by this script only 
 
 /bin/bash playwright.sh --allow-only -- ... rest of params for playwright
