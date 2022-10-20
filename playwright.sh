@@ -138,9 +138,6 @@ trim() {
     echo -n "$var"
 }
 
-PARAMS="$(trim "$PARAMS")"
-_EVAL="$(trim "$_EVAL")"
-
 if [ "${_HELP}" = "1" ]; then
 
 cat <<EOF
@@ -184,17 +181,38 @@ ${YELLOW}/bin/bash playwright.sh ${BOLD}--project all${RESET} -- ... optionally 
 ${GREEN}ALL PARAMS BELOW ARE USED ONLY IF playwright.sh IS SWITCHED TO ${BOLD}--target docker${RESET}:
 
 ${YELLOW}/bin/bash playwright.sh -t docker ${BOLD}--nohost${RESET} ${YELLOW} -- ... optionally other native params for playwright${RESET}
+    # WARNING: be aware that this is params only handled/consumed by this script only 
     # it is here to explicitly NOT add to docker run parameters:
     # --net host
     #   or
     # --env HOST=host.docker.internal
     # depends what OS will be detected
 
+Up to this point you've probably noticed that we are using delimiter ${RED}--${RESET} to separater parameters for playwright.sh script and parameters for playwright itself.
+But in "-t docker" mode we can use TWO pairs of ${RED}--${RESET} delimiter, this way we will have more control over not only playwright but also we will be able to inject some extra parameters also to docker run itself.
+Example:
+    ${YELLOW}/bin/bash playwright.sh -t docker --nohost ${RED}--${YELLOW} -v "\$(pwd)/.env_docker:/code/.env" ${RED}--${RESET}
+        # this way by using --nohost we will not inject --env HOST=host.docker.internal (in MAC case) and we can provide different .env_docker with HOST and mount it inside container as /code/.env
+        # ${RED}WARNING${RESET}: important part here is that at the end we have second ${RED}--${RESET}, this way we are clearly indicating that parameter
+        #    -v "\$(pwd)/.env_docker:/code/.env"
+        # is for "docker run"
+        # not for playwright tool executed inside container
+    # Obviously this way we can inject some params to playwright too: 
+    ${YELLOW}/bin/bash playwright.sh -t docker --nohost ${RED}--${YELLOW} -v "\$(pwd)/.env_docker:/code/.env" ${RED}--${YELLOW} --list${RESET}
+        # this way "docker run" will get extra param:
+            -v "\$(pwd)/.env_docker:/code/.env"
+        # and playwright will get
+            --list
+            
+
 EOF
 
 exit 0
 
 fi
+
+PARAMS="$(trim "$PARAMS")"
+_EVAL="$(trim "$_EVAL")"
 
 eval set -- "$PARAMS"
 
@@ -226,6 +244,77 @@ if [ "${_TARGET}" = "docker" ]; then
         fi
     fi
 
+
+# handling double -- on the list of arguments vvv
+DOUBLEDASH="0"
+for ARG in "$@"; do
+#   echo ">${ARG}<"
+  if [ "${ARG}" = "--" ]; then
+    DOUBLEDASH="$((${DOUBLEDASH}+1))"
+  fi
+done
+if [ "${DOUBLEDASH}" -gt "0" ]; then
+
+PARAMS=""
+_EVAL=""
+DOCKER_PARAMS=""
+DOCKER_PARAMS_NOT_QUOTED="-v \"$(pwd)/.env:/code/.env\""
+DOCKER__EVAL=""
+
+_FOR_DOCKER="1"
+for ARG in "$@"; do
+  if [ "${ARG}" = "--" ]; then
+    _FOR_DOCKER="0"
+    continue;
+  fi
+  if [ "${_FOR_DOCKER}" = "1" ]; then
+    if [ "${ARG}" = "&&" ]; then
+        DOCKER_PARAMS="$DOCKER_PARAMS \&\&"
+        DOCKER__EVAL="$DOCKER__EVAL &&"
+        DOCKER_PARAMS_NOT_QUOTED="$DOCKER_PARAMS_NOT_QUOTED \&\&"
+    else
+        if [ "$DOCKER_PARAMS" = "" ]; then
+            DOCKER_PARAMS="\"$(quote "${ARG}")\""
+            DOCKER__EVAL="\"$(quote "${ARG}")\""
+            DOCKER_PARAMS_NOT_QUOTED="${ARG}"
+        else
+            DOCKER_PARAMS="$DOCKER_PARAMS \"$(quote "${ARG}")\""
+            DOCKER__EVAL="$DOCKER__EVAL \"$(quote "${ARG}")\""
+            DOCKER_PARAMS_NOT_QUOTED="$DOCKER_PARAMS_NOT_QUOTED ${ARG}"
+        fi
+    fi
+  else
+    if [ "${ARG}" = "&&" ]; then
+        PARAMS="$PARAMS \&\&"
+        _EVAL="$_EVAL &&"
+    else
+        if [ "$PARAMS" = "" ]; then
+        PARAMS="\"$(quote "${ARG}")\""
+        _EVAL="\"$(quote "${ARG}")\""
+        else
+        PARAMS="$PARAMS \"$(quote "${ARG}")\""
+        _EVAL="$_EVAL \"$(quote "${ARG}")\""
+        fi
+    fi
+  fi
+done
+
+PARAMS="$(trim "$PARAMS")"
+_EVAL="$(trim "$_EVAL")"
+
+eval set -- "$PARAMS"
+
+# echo "PARAMS>${PARAMS}<"
+# echo "_EVAL>${_EVAL}<"
+# echo "DOCKER_PARAMS>${DOCKER_PARAMS}<"
+# echo "DOCKER__EVAL>${DOCKER__EVAL}<"
+# echo "DOCKER_PARAMS_NOT_QUOTED>${DOCKER_PARAMS_NOT_QUOTED}<"
+
+fi
+# handling double -- on the list of arguments ^^^
+
+# set -x # uncomment if you want to see final command
+
     docker run \
         -i \
         --rm \
@@ -236,8 +325,8 @@ if [ "${_TARGET}" = "docker" ]; then
         -v "$(pwd)/node_modules:/code/node_modules" \
         -v "$(pwd)/playwright-async.config.js:/code/playwright-async.config.js" \
         -v "$(pwd)/playwright.config.js:/code/playwright.config.js" \
-        -v "$(pwd)/.env:/code/.env" \
         ${_HOSTHANDLER} \
+        ${DOCKER_PARAMS_NOT_QUOTED} \
         mcr.microsoft.com/playwright:v1.27.1-focal \
         node /ms-playwright-agent/node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
     
