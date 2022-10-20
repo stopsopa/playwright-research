@@ -142,17 +142,21 @@ cat <<EOF
 /bin/bash playwright.sh -- --workers=5
     # this will override hardcoded --workers=1 (which is added by default)
 
-/bin/bash playwright.sh --project=firefox -- ... rest of params for playwright
+/bin/bash playwright.sh --project firefox -- ... rest of params for playwright    
     or
-/bin/bash playwright.sh --project=all -- ... rest of params for playwright
-    # it's here because --project=chromium is added by default
-    # --project=firefox   - this will change browser to firefox
-    # --project=all       - this will launch against all registered browsers
+/bin/bash playwright.sh --project all -- ... rest of params for playwright
+    # WARNING: --project param given to playwright.sh should have format:
+    #               --project firefox
+    #                   not
+    #               --project=firefox
+    # it's here because --project chromium is added by default
+    # --project firefox   - this will change browser to firefox
+    # --project all       - this will launch against all registered browsers
     # WARNING: be aware that this is params only handled/consumed by this script only 
         # there is one edge case
-            /bin/bash playwright.sh --project=all -- --project=firefox ... rest of params for playwright
+            /bin/bash playwright.sh --project all -- --project=firefox ... rest of params for playwright
                 this is the same as 
-            /bin/bash playwright.sh --project=firefox -- ... rest of params for playwright
+            /bin/bash playwright.sh --project firefox -- ... rest of params for playwright
 
 EOF
 
