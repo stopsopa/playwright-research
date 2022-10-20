@@ -34,9 +34,9 @@ function check(val, name) {
   }
 }
 
-check(process.env.PW_HOST, "PW_HOST");
+check(process.env.HOST, "HOST");
 
-check(process.env.PW_PORT, "PW_PORT");
+check(process.env.PORT, "PORT");
 
 const web = path.resolve(__dirname, "public");
 
@@ -115,7 +115,7 @@ app.use(
   serveIndex(web, { icons: true })
 );
 
-app.listen(process.env.PW_PORT, process.env.PW_HOST, () => {
-  console.log(`\n 🌎  Server is running ` + `http://${process.env.PW_HOST}:${process.env.PW_PORT}\n`);
+app.listen(process.env.PORT, process.env.HOST, () => {
+  console.log(`\n 🌎  Server is running ` + `http://${process.env.HOST}:${process.env.PORT}\n`);
   ready = true;
 });

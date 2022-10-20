@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [main, master]
 jobs:
-  chromium:
+  ubuntu-local-chromium:
     timeout-minutes: 60
     runs-on: ubuntu-20.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
     strategy:
@@ -26,7 +26,7 @@ jobs:
       - name: playwright tests
         run: |
           node node_modules/.bin/playwright test --forbid-only --project=chromium --workers=1
-  firefox:
+  ubuntu-local-firefox:
     timeout-minutes: 60
     runs-on: ubuntu-20.04
     strategy:
@@ -47,5 +47,24 @@ jobs:
       - name: playwright tests
         run: |
           node node_modules/.bin/playwright test --forbid-only --project=firefox --workers=1
+  ubuntu-docker-chromium:
+    timeout-minutes: 60
+    runs-on: ubuntu-20.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [16, 17, 18] # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.version }}
+      - name: yarn install
+        run: yarn
+      - name: run server
+        run: node server.js &
+      - name: playwright tests
+        run: |
+          /bin/bash playwright.sh -t docker
 
 # https://playwright.dev/docs/ci          

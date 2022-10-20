@@ -26,18 +26,18 @@ function envcheck(name, ret) {
 if (envcheck("BASE_URL", true)) {
   console.log(`existing BASE_URL: >${process.env.BASE_URL}<`);
 } else {
-  envcheck("PW_SCHEMA");
+  envcheck("SCHEMA");
 
-  envcheck("PW_HOST");
+  envcheck("HOST");
 
-  if (!["http", "https"].includes(process.env.PW_SCHEMA)) {
-    throw th(`process.env.PW_SCHEMA should be http or https`);
+  if (!["http", "https"].includes(process.env.SCHEMA)) {
+    throw th(`process.env.SCHEMA should be http or https`);
   }
 
-  process.env.BASE_URL = `${process.env.PW_SCHEMA}://${process.env.PW_HOST}`;
+  process.env.BASE_URL = `${process.env.SCHEMA}://${process.env.HOST}`;
 
-  if (envcheck("PW_PORT", true)) {
-    process.env.BASE_URL += `:${process.env.PW_PORT}`;
+  if (envcheck("PORT", true)) {
+    process.env.BASE_URL += `:${process.env.PORT}`;
   }
 
   console.log(`generated BASE_URL: >${process.env.BASE_URL}<`);
