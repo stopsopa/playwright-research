@@ -185,7 +185,7 @@ if [ "${_TARGET}" = "docker" ]; then
     if [[ "$OSTYPE" == "darwin"* ]]; then
         _HOSTHANDLER="--env HOST=host.docker.internal"
     else
-        _HOSTHANDLER="-net host"
+        _HOSTHANDLER="--net host"
     fi
 
     docker run \
