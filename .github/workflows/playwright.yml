@@ -25,7 +25,7 @@ jobs:
         run: node server.js &
       - name: playwright tests
         run: |
-          /bin/bash playwright.sh -t local --project chromium
+          /bin/bash playwright.sh -t local --headless --project chromium
   ubuntu-local-firefox:
     timeout-minutes: 60
     runs-on: ubuntu-20.04
@@ -46,7 +46,7 @@ jobs:
         run: node server.js &
       - name: playwright tests
         run: |          
-          /bin/bash playwright.sh -t local --project firefox
+          /bin/bash playwright.sh -t local --headless --project firefox
   ubuntu-docker-chromium:
     timeout-minutes: 60
     runs-on: ubuntu-20.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
