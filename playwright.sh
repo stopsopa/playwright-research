@@ -49,6 +49,7 @@ _HELP="0";
 _HEADLESS="--headed"
 _ALLOWONLY="--forbid-only"
 _PROJECT="--project=chromium"
+_TESTAGAINSTHOST="1"
 
 PARAMS=""
 _EVAL=""
@@ -60,6 +61,10 @@ while (( "$#" )); do
       ;;
     --headless)
       _HEADLESS="";
+      shift;
+      ;;
+    --nohost)
+      _TESTAGAINSTHOST="0";
       shift;
       ;;
     --allow-only)
@@ -140,10 +145,13 @@ if [ "${_HELP}" = "1" ]; then
 
 cat <<EOF
 
+Purpose of this script is to provide the same way to launch test natively on your host machine but also after adding one parameter to launch it in docker exactly the same way.
+
 ${YELLOW}/bin/bash playwright.sh ${BOLD}--target local${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}  
     # ${BOLD}--target local${RESET} is actually by default, so you don't really need to specify --target to launch on "local"
     # but you have to specify it if you want to launch test in docker using ${BOLD}--target docker${RESET}
 ${YELLOW}/bin/bash playwright.sh ${BOLD}--target docker${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}
+    # shortcut is ${BOLD}-t${RESET}
 
 ${YELLOW}/bin/bash playwright.sh ${BOLD}--headless${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}
     # it's here because ${BOLD}--headed${RESET} is added by default (by default in "--target local" but not in "--target docker")
@@ -171,6 +179,16 @@ ${YELLOW}/bin/bash playwright.sh ${BOLD}--project all${RESET} -- ... optionally 
             /bin/bash playwright.sh ${BOLD}--project all${RESET} -- ${BOLD}--project=firefox${RESET} ... optionally other native params for playwright
                 this is the same as 
             /bin/bash playwright.sh ${BOLD}--project firefox${RESET} -- ... optionally other native params for playwright
+    # shortcut is ${BOLD}-p${RESET}
+
+${GREEN}ALL PARAMS BELOW ARE USED ONLY IF playwright.sh IS SWITCHED TO ${BOLD}--target docker${RESET}:
+
+${YELLOW}/bin/bash playwright.sh -t docker ${BOLD}--nohost${RESET} ${YELLOW} -- ... optionally other native params for playwright${RESET}
+    # it is here to explicitly NOT add to docker run parameters:
+    # --net host
+    #   or
+    # --env HOST=host.docker.internal
+    # depends what OS will be detected
 
 EOF
 
@@ -200,10 +218,12 @@ if [ "${_TARGET}" = "docker" ]; then
 
     set -e
 
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        _HOSTHANDLER="--env HOST=host.docker.internal"
-    else
-        _HOSTHANDLER="--net host"
+    if [ "${_TESTAGAINSTHOST}" = "1" ]; then
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            _HOSTHANDLER="--env HOST=host.docker.internal"
+        else
+            _HOSTHANDLER="--net host"
+        fi
     fi
 
     docker run \
