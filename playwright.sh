@@ -29,6 +29,15 @@ esac
 
 cd "${_DIR}"
 
+node -v 1> /dev/null 2> /dev/null
+
+if [ "${?}" != "0" ]; then
+
+  echo "${0} error: node.js is not available"
+
+  exit 1
+fi
+
 GRAY=$(tput setaf 244)
 BLACK=$(tput setaf 0)
 RED=$(tput setaf 1)
@@ -290,9 +299,7 @@ Example:
 
         # So at this point you can see that playwright-docker-defaults.sh and double -- works independently mainly to mount any .env without need to manipulate playwright-docker-defaults.sh
         # In other words: by design developer is encouraged to use more often double -- delimters to switch different .env files over changing playwright-docker-defaults.sh files - this should be more rare.
-
             
-
 EOF
 
 exit 0
@@ -412,12 +419,53 @@ if [ "${?}" != "0" ]; then
     exit 1
 fi
 
+# extracting dependencies.playwright from package.json
+PLAYWRIGHT_VER="$(cat <<EOF | node
+const fs = require("fs");
+
+const file = "./package.json";
+
+if (!fs.existsSync(file)) {
+  throw new Error("playwright.sh error: file " + file + " doesn't exist");
+}
+
+if (!fs.lstatSync(file).isFile()) {
+  throw new Error("playwright.sh error: path " + file + " is not a file");
+}
+
+const package = require(file);
+
+const dependencies = {
+  ...package.dependencies,
+  ...package.devDependencies,
+};
+
+const ver = dependencies.playwright;
+
+const parts = ver.match(/\d+\.\d+\.\d+/);
+
+if (!parts || parts.length !== 1) {
+  throw new Error("playwright.sh error: " + file + " playwright dependency is not defined");
+}
+
+process.stdout.write(parts[0]);
+
+EOF
+)";
+
+if [ "${?}" != "0" ]; then
+
+    echo "${0} error: extracting dependencies.playwright from package.json failed";
+
+    exit 1
+fi
+
 CMD="$(cat <<EOF
 docker run -i --rm --ipc host --cap-add SYS_ADMIN $S
 ${DOCKERDEFAULTS} $S
 ${DOCKER_PARAMS_NOT_QUOTED} $S
 ${_HOSTHANDLER} $S
-mcr.microsoft.com/playwright:v1.27.1-focal $S
+mcr.microsoft.com/playwright:v${PLAYWRIGHT_VER}-focal $S
 node /ms-playwright-agent/node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
 EOF
 )"
@@ -434,4 +482,3 @@ fi
 echo "${0} error: unhandled --target '${_TARGET}'"
 
 exit 1
-

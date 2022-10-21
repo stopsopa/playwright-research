@@ -28,6 +28,6 @@ https://github.com/microsoft/playwright/issues/7035
 https://playwright.dev/docs/intro
 
 # todo
-- [ ] integrate with GH Actions
-- [ ] build some example tests
-- [ ] make docker image version package.json '@playwright/test' driven
+- [x] integrate with GH Actions
+- [x] build some example tests
+- [x] make docker image version package.json '@playwright/test' driven
