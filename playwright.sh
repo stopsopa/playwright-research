@@ -1,4 +1,6 @@
 
+S="\\" # will be used later
+
 # current shell name reliably
 _SHELL="$(ps "${$}" | grep "${$} " | grep -v grep | sed -rn "s/.*[-\/]+(bash|z?sh) .*/\1/p")"; # bash || sh || zsh
 case ${_SHELL} in
@@ -50,6 +52,8 @@ _HEADLESS="--headed"
 _ALLOWONLY="--forbid-only"
 _PROJECT="--project=chromium"
 _TESTAGAINSTHOST="1"
+_DOCKERDEFAULTS="./playwright-docker-defaults.sh"
+_GENDOCKERDEFAULTS="0"
 
 PARAMS=""
 _EVAL=""
@@ -59,6 +63,10 @@ while (( "$#" )); do
       _HELP="1";
       shift;
       ;;
+    --generate-playwright-docker-defaults)
+      _GENDOCKERDEFAULTS="1";
+      shift;
+      ;;
     --headless)
       _HEADLESS="";
       shift;
@@ -66,6 +74,18 @@ while (( "$#" )); do
     --nohost)
       _TESTAGAINSTHOST="0";
       shift;
+      ;;
+    -dd|--docker-defaults)
+      if [ "$2" = "" ]; then
+        echo "$0 error: -dd|--docker-defaults value can't be empty" >&2 
+        exit 1;                                          
+      fi                 
+      if [ ! -f "${_DOCKERDEFAULTS}" ]; then
+        echo "$0 error: -dd|--docker-defaults file '${_DOCKERDEFAULTS}' doesn't exist" >&2 
+        exit 1;                                          
+      fi        
+      _DOCKERDEFAULTS="$2";
+      shift 2;
       ;;
     --allow-only)
       _ALLOWONLY="";
@@ -82,7 +102,7 @@ while (( "$#" )); do
       ;;
     -t|--target)
       if [ "$2" = "" ]; then                           
-        echo "$0 error: --target value can't be empty" >&2 
+        echo "$0 error: -t|--target value can't be empty" >&2 
         exit 1;                                          
       fi                              
       _TARGET="$2";
@@ -129,6 +149,32 @@ while (( "$#" )); do
   esac
 done
 
+if [ "${_GENDOCKERDEFAULTS}" = "1" ]; then
+
+    # if [ -f "${_DOCKERDEFAULTS}" ]; then
+
+    #     echo "$0 error: file '${_DOCKERDEFAULTS}' already exists" >&2 
+
+    #     exit 1;                 
+    # fi
+
+cat <<EEE > "${_DOCKERDEFAULTS}"
+
+S="\\\\"
+
+cat <<EOF
+-w "/code" \$S
+-v "\\\$(pwd)/tests:/code/tests" \$S
+-v "\\\$(pwd)/node_modules:/code/node_modules" \$S
+-v "\\\$(pwd)/playwright-async.config.js:/code/playwright-async.config.js" \$S
+-v "\\\$(pwd)/playwright.config.js:/code/playwright.config.js"
+EOF
+
+EEE
+
+    exit 0
+fi
+
 trim() {
     local var="$*"
     # remove leading whitespace characters
@@ -143,6 +189,22 @@ if [ "${_HELP}" = "1" ]; then
 cat <<EOF
 
 Purpose of this script is to provide the same way to launch test natively on your host machine but also after adding one parameter to launch it in docker exactly the same way.
+
+First you might need to generate file with default parameters for "docker run" internal command (optional: only if you will use "-t docker" mode):
+${YELLOW}/bin/bash playwright.sh ${BOLD}--generate-playwright-docker-defaults${RESET}
+    # to generate ./playwright-docker-defaults.sh
+
+    # you might also specify different path for target 
+${YELLOW}/bin/bash playwright.sh --generate-playwright-docker-defaults ${BOLD}--docker-defaults ./playwright-docker-defaults2.sh${RESET}
+    # but from now on you will have to always specify extra parameter (for "-t docker" mode)
+        --docker-defaults ./playwright-docker-defaults2.sh
+    # because by default it is
+        --docker-defaults ./playwright-docker-defaults.sh
+
+    # ${GREEN}NOTICE${RESET}: you might also reset injecting any default params by executing passing /dev/null and then defining everything manually using double -- delimiters
+        ${YELLOW}/bin/bash playwright.sh -t docker --docker-defaults /dev/null -- [params for "docker run"] -- [params for internal execution of playwright]
+
+        
 
 ${YELLOW}/bin/bash playwright.sh ${BOLD}--target local${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}  
     # ${BOLD}--target local${RESET} is actually by default, so you don't really need to specify --target to launch on "local"
@@ -163,14 +225,16 @@ ${YELLOW}/bin/bash playwright.sh -- ${BOLD}--workers=5${RESET}
 
 ${YELLOW}/bin/bash playwright.sh ${BOLD}--project firefox${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET} 
     or
-${YELLOW}/bin/bash playwright.sh ${BOLD}--project all${RESET} -- ... optionally other native params for playwright${RESET}
+${YELLOW}/bin/bash playwright.sh ${BOLD}--project all${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}
     # WARNING: --project param given to playwright.sh should have format:
     #               ${BOLD}--project firefox${RESET}
     #                   not
     #               ${BOLD}--project=firefox${RESET}
     # it's here because ${BOLD}--project chromium${RESET} is added by default
     # ${BOLD}--project firefox${RESET}   - this will change browser to firefox
-    # ${BOLD}--project all${RESET}       - this will launch against all registered browsers
+    # ${BOLD}--project all${RESET}       - this will launch against all registered browsers 
+    #       (this will internally force to not pass --project arg to playwright - this way test will be executed against all registered browsers)
+
     # WARNING: be aware that this is params only handled/consumed by this script only 
         # there is one edge case
             /bin/bash playwright.sh ${BOLD}--project all${RESET} -- ${BOLD}--project=firefox${RESET} ... optionally other native params for playwright
@@ -178,21 +242,23 @@ ${YELLOW}/bin/bash playwright.sh ${BOLD}--project all${RESET} -- ... optionally 
             /bin/bash playwright.sh ${BOLD}--project firefox${RESET} -- ... optionally other native params for playwright
     # shortcut is ${BOLD}-p${RESET}
 
-${GREEN}ALL PARAMS BELOW ARE USED ONLY IF playwright.sh IS SWITCHED TO ${BOLD}--target docker${RESET}:
+${GREEN}ALL PARAMS BELOW ARE USED ONLY IF playwright.sh IS SWITCHED TO ${BOLD}--target docker${RESET}${GREEN} mode:${RESET}
 
 ${YELLOW}/bin/bash playwright.sh -t docker ${BOLD}--nohost${RESET} ${YELLOW} -- ... optionally other native params for playwright${RESET}
     # WARNING: be aware that this is params only handled/consumed by this script only 
-    # it is here to explicitly NOT add to docker run parameters:
+    # it is here to explicitly NOT add to "docker run" parameters:
     # --net host
     #   or
     # --env HOST=host.docker.internal
     # depends what OS will be detected
 
 Up to this point you've probably noticed that we are using delimiter ${RED}--${RESET} to separater parameters for playwright.sh script and parameters for playwright itself.
-But in "-t docker" mode we can use TWO pairs of ${RED}--${RESET} delimiter, this way we will have more control over not only playwright but also we will be able to inject some extra parameters also to docker run itself.
+But in "-t docker" mode we can use TWO pairs of ${RED}--${RESET} delimiter, this way we will have more control over not only playwright but also we will be able to inject some extra parameters to "docker run" itself.
 Example:
     ${YELLOW}/bin/bash playwright.sh -t docker --nohost ${RED}--${YELLOW} -v "\$(pwd)/.env_docker:/code/.env" ${RED}--${RESET}
-        # this way by using --nohost we will not inject --env HOST=host.docker.internal (in MAC case) and we can provide different .env_docker with HOST and mount it inside container as /code/.env
+        # this way by using --nohost we will not inject --env HOST=host.docker.internal (in MAC case) and we can provide different .env_docker with HOST env var and mount it inside container as /code/.env
+        #    (this might be useful for launching docker tests against external domain - not against server on host/dev machine)
+
         # ${RED}WARNING${RESET}: important part here is that at the end we have second ${RED}--${RESET}, this way we are clearly indicating that parameter
         #    -v "\$(pwd)/.env_docker:/code/.env"
         # is for "docker run"
@@ -203,6 +269,28 @@ Example:
             -v "\$(pwd)/.env_docker:/code/.env"
         # and playwright will get
             --list
+        # ${GREEN}NOTICE${RESET}: It is worth understanding that if one pair of delimiter -- is used then actually 
+            -v "\$(pwd)/.env:/code/.env"
+        # is set by default, and by specifying
+            -v "\$(pwd)/.env_docker:/code/.env"
+        # we are effectively replacing default mounting of .env with mounting .env_docker in it's place instead
+        # another consequence of that is that if you would really want to add any extra parameter beyond those defined in playwright-docker-defaults.sh
+        # but keep -v "\$(pwd)/.env:/code/.env" unchanged it is still necessary to specify -v "\$(pwd)/.env:/code/.env" and extra params like --name after it, like:
+           ${YELLOW}/bin/bash playwright.sh -t docker --nohost ${RED}--${YELLOW} -v "\$(pwd)/.env:/code/.env" --name my_container_name ${RED}--${YELLOW} --list${RESET}
+        
+        # executing 
+           ${YELLOW}/bin/bash playwright.sh -t docker --nohost ${RED}--${YELLOW} --name my_container_name ${RED}--${YELLOW} --list${RESET}
+        # will not work because this way we are not setting .env at all
+
+        # Other way of thinking about it is that params defined in playwright-docker-defaults.sh file are injected separately from mounting .env into container
+        # and this is done deliberately to have more flexibility in injecting different .env files for different purposes without need to manipulate playwright-docker-defaults.sh.
+
+        # Yet another way of thinking is treating playwright-docker-defaults.sh as reversed .gitignore to define what from our project SHOULD be mounted into our container for testing.
+        # By "reversed" .gitignore I meain the fact that .gitignore specifies what should be OMITTED not included, where playwright-docker-defaults.sh describes what should be MOUNTED into container.
+
+        # So at this point you can see that playwright-docker-defaults.sh and double -- works independently mainly to mount any .env without need to manipulate playwright-docker-defaults.sh
+        # In other words: by design developer is encouraged to use more often double -- delimters to switch different .env files over changing playwright-docker-defaults.sh files - this should be more rare.
+
             
 
 EOF
@@ -253,14 +341,14 @@ for ARG in "$@"; do
     DOUBLEDASH="$((${DOUBLEDASH}+1))"
   fi
 done
-if [ "${DOUBLEDASH}" -gt "0" ]; then
 
+DOCKER_PARAMS_NOT_QUOTED="-v \"$(pwd)/.env:/code/.env\""
 PARAMS=""
 _EVAL=""
 DOCKER_PARAMS=""
-DOCKER_PARAMS_NOT_QUOTED="-v \"$(pwd)/.env:/code/.env\""
 DOCKER__EVAL=""
 
+if [ "${DOUBLEDASH}" -gt "0" ]; then
 _FOR_DOCKER="1"
 for ARG in "$@"; do
   if [ "${ARG}" = "--" ]; then
@@ -315,20 +403,30 @@ fi
 
 # set -x # uncomment if you want to see final command
 
-    docker run \
-        -i \
-        --rm \
-        --ipc host \
-        --cap-add SYS_ADMIN \
-        -w "/code" \
-        -v "$(pwd)/tests:/code/tests" \
-        -v "$(pwd)/node_modules:/code/node_modules" \
-        -v "$(pwd)/playwright-async.config.js:/code/playwright-async.config.js" \
-        -v "$(pwd)/playwright.config.js:/code/playwright.config.js" \
-        ${_HOSTHANDLER} \
-        ${DOCKER_PARAMS_NOT_QUOTED} \
-        mcr.microsoft.com/playwright:v1.27.1-focal \
-        node /ms-playwright-agent/node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
+DOCKERDEFAULTS="$(/bin/bash "${_DOCKERDEFAULTS}")"
+
+if [ "${?}" != "0" ]; then
+
+    echo "${0} error: executing '${_DOCKERDEFAULTS}' have failed";
+
+    exit 1
+fi
+
+CMD="$(cat <<EOF
+docker run -i --rm --ipc host --cap-add SYS_ADMIN $S
+${DOCKERDEFAULTS} $S
+${DOCKER_PARAMS_NOT_QUOTED} $S
+${_HOSTHANDLER} $S
+mcr.microsoft.com/playwright:v1.27.1-focal $S
+node /ms-playwright-agent/node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
+EOF
+)"
+
+printf "\n$CMD\n\n"
+
+CMD="${CMD//\\$'\n'/}"
+
+eval $CMD
     
     exit 0
 fi
