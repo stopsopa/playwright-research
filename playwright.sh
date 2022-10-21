@@ -201,7 +201,7 @@ ${YELLOW}/bin/bash playwright.sh --generate-playwright-docker-defaults ${BOLD}--
     # because by default it is
         --docker-defaults ./playwright-docker-defaults.sh
 
-    # ${GREEN}NOTICE${RESET}: you might also reset injecting any default params by executing passing /dev/null and then defining everything manually using double -- delimiters
+    # ${GREEN}NOTICE${RESET}: you might also reset injecting any default params by passing /dev/null and then defining everything manually using double -- delimiters
         ${YELLOW}/bin/bash playwright.sh -t docker --docker-defaults /dev/null -- [params for "docker run"] -- [params for internal execution of playwright]
 
         
