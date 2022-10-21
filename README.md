@@ -2,27 +2,46 @@
 # What is purpose of this repository?
 
 The idea behind this repository is to create single point of execution to run playwright tests in most portable way possible across different scenarios:
-1) run tests locally against your local server to have all test "blink" in front of your eyes
-2) run tests locally against your local server in headles mode
-3) run tests locally in docker against remote server and have them "blink" in front of your eyes
-4) run tests locally in docker against remote server in headles mode
-5) run all tests locally in docker against your local server
-6) run all tests locally in docker remote server
-7) and so on
+
+    1) run all tests locally against your local server to have all test "blink" in front of your eyes
+
+    2) run all tests locally against your local server in headless mode
+
+    3) run all tests locally against any remote server to have all test "blink" in front of your eyes
+
+    4) run all tests locally in docker against your local server in headless mode
+
+    5) run all tests locally in docker against any remote server in headless mode
+
+    6) and so on
 
 Additionally
-8) all above should be done by executing single line of code
-9) command should return proper exit code
-10) filtering tests to run single directory or single test.spec file
-11) injecting env vars one by one or via injecting different .env file
-12) it should have place to configure what should be mounted for tests to "docker run -v ..." if executed in docker mode
-13) if tests executed in docker, version of docker image should be determined by extracting version of "[playwright](https://www.npmjs.com/package/playwright)" library from local package.json
-14) if tests executed in docker command should return the final docker run command executed
-15) it should provide way to control all arguments of "docker run" command
-16) it should provide way to control all arguments of "playwrite run" command
-17) it should run tests in headless mode by default if executed in docker
-18) it should run tests in headed mode by default if executed on local machine
-19) command also should be usable in pipelines
+
+    a) all above should be done by executing single line of code
+
+    b) command should return proper exit code
+
+    c) filtering tests to run single directory or single test.spec file
+
+    d) injecting env vars one by one or via injecting different .env file (or both)
+
+    e) it should have place to configure what should be mounted for tests to "docker run -v ..." if executed in docker mode
+
+    f) if tests executed in docker, version of docker image should be determined by extracting version of "[playwright](https://www.npmjs.com/package/playwright)" library from local package.json
+
+    g) if tests executed in docker command should return the final docker run command executed
+
+    h) it should provide way to control all arguments of "docker run" command
+
+    i) it should provide way to control all arguments of "playwrite run" command
+
+    j) it should run tests in headless mode by default if executed in docker
+
+    k) it should run tests in headed mode by default if executed on local machine
+
+    l) should allow you to choose one browser to run tests against from playwright.config.js
+
+    m) command also should be usable in pipelines
 
 To achieve all above there is few "things" needed:
 - playwright.sh file
@@ -32,7 +51,33 @@ To achieve all above there is few "things" needed:
 - you need to have some tests (by default in "tests" directory)
 - you also have to have playwright.config.js (obviously)
 
-Here are examples how to achieve each point from 
+Here are examples how to achieve each point from above requirements:
+
+# 1
+
+```
+
+/bin/bash playwright.sh
+
+```
+
+Just running script with no params should execute tests locally and make them blink in front of your eyes.
+
+(Obviously you have to have your server running)
+
+
+# 2
+
+```
+
+/bin/bash playwright.sh --headless
+
+```
+
+read "/bin/bash playwright.sh -h" for details
+
+
+
 
 
 # doc
