@@ -160,12 +160,12 @@ done
 
 if [ "${_GENDOCKERDEFAULTS}" = "1" ]; then
 
-    # if [ -f "${_DOCKERDEFAULTS}" ]; then
+  if [ -f "${_DOCKERDEFAULTS}" ]; then
 
-    #     echo "$0 error: file '${_DOCKERDEFAULTS}' already exists" >&2 
+      echo "$0 error: file '${_DOCKERDEFAULTS}' already exists" >&2 
 
-    #     exit 1;                 
-    # fi
+      exit 1;                 
+  fi
 
 cat <<EEE > "${_DOCKERDEFAULTS}"
 
@@ -175,14 +175,13 @@ cat <<EOF
 -w "/code" \$S
 -v "\\\$(pwd)/tests:/code/tests" \$S
 -v "\\\$(pwd)/node_modules:/code/node_modules" \$S
--v "\\\$(pwd)/playwright-async.config.js:/code/playwright-async.config.js" \$S
 -v "\\\$(pwd)/playwright.config.js:/code/playwright.config.js"
 EOF
 
 EEE
 
     exit 0
-fi
+fi # end of    if [ "${_GENDOCKERDEFAULTS}" = "1" ]; then    condition
 
 trim() {
     local var="$*"
@@ -302,7 +301,7 @@ Example:
             
 EOF
 
-exit 0
+  exit 0
 
 fi
 
@@ -313,111 +312,110 @@ eval set -- "$PARAMS"
 
 if [ "${_TARGET}" = "local" ]; then
 
-    set -e
+  set -e
 
-    if [ ! -f "node_modules/.bin/playwright" ]; then
+  if [ ! -f "node_modules/.bin/playwright" ]; then
 
-        echo "${0} error: node_modules/.bin/playwright doesn't exist"
+    echo "${0} error: node_modules/.bin/playwright doesn't exist"
 
-        exit 1
-    fi
+    exit 1
+  fi
 
-    node node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
+  node node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
 
-    exit 0
+  exit 0
 fi
 
 if [ "${_TARGET}" = "docker" ]; then
 
-    set -e
+  set -e
 
-    if [ "${_TESTAGAINSTHOST}" = "1" ]; then
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            _HOSTHANDLER="--env HOST=host.docker.internal"
-        else
-            _HOSTHANDLER="--net host"
-        fi
-    fi
-
-
-# handling double -- on the list of arguments vvv
-DOUBLEDASH="0"
-for ARG in "$@"; do
-#   echo ">${ARG}<"
-  if [ "${ARG}" = "--" ]; then
-    DOUBLEDASH="$((${DOUBLEDASH}+1))"
+  if [ "${_TESTAGAINSTHOST}" = "1" ]; then
+      if [[ "$OSTYPE" == "darwin"* ]]; then
+          _HOSTHANDLER="--env HOST=host.docker.internal"
+      else
+          _HOSTHANDLER="--net host"
+      fi
   fi
-done
 
-DOCKER_PARAMS_NOT_QUOTED="-v \"$(pwd)/.env:/code/.env\""
-PARAMS=""
-_EVAL=""
-DOCKER_PARAMS=""
-DOCKER__EVAL=""
-
-if [ "${DOUBLEDASH}" -gt "0" ]; then
-_FOR_DOCKER="1"
-for ARG in "$@"; do
-  if [ "${ARG}" = "--" ]; then
-    _FOR_DOCKER="0"
-    continue;
-  fi
-  if [ "${_FOR_DOCKER}" = "1" ]; then
-    if [ "${ARG}" = "&&" ]; then
-        DOCKER_PARAMS="$DOCKER_PARAMS \&\&"
-        DOCKER__EVAL="$DOCKER__EVAL &&"
-        DOCKER_PARAMS_NOT_QUOTED="$DOCKER_PARAMS_NOT_QUOTED \&\&"
-    else
-        if [ "$DOCKER_PARAMS" = "" ]; then
-            DOCKER_PARAMS="\"$(quote "${ARG}")\""
-            DOCKER__EVAL="\"$(quote "${ARG}")\""
-            DOCKER_PARAMS_NOT_QUOTED="${ARG}"
-        else
-            DOCKER_PARAMS="$DOCKER_PARAMS \"$(quote "${ARG}")\""
-            DOCKER__EVAL="$DOCKER__EVAL \"$(quote "${ARG}")\""
-            DOCKER_PARAMS_NOT_QUOTED="$DOCKER_PARAMS_NOT_QUOTED ${ARG}"
-        fi
+  # handling double -- on the list of arguments vvv
+  DOUBLEDASH="0"
+  for ARG in "$@"; do
+  #   echo ">${ARG}<"
+    if [ "${ARG}" = "--" ]; then
+      DOUBLEDASH="$((${DOUBLEDASH}+1))"
     fi
-  else
-    if [ "${ARG}" = "&&" ]; then
-        PARAMS="$PARAMS \&\&"
-        _EVAL="$_EVAL &&"
-    else
-        if [ "$PARAMS" = "" ]; then
-        PARAMS="\"$(quote "${ARG}")\""
-        _EVAL="\"$(quote "${ARG}")\""
+  done
+
+  DOCKER_PARAMS_NOT_QUOTED="-v \"$(pwd)/.env:/code/.env\""
+  PARAMS=""
+  _EVAL=""
+  DOCKER_PARAMS=""
+  DOCKER__EVAL=""
+
+  if [ "${DOUBLEDASH}" -gt "0" ]; then
+    _FOR_DOCKER="1"
+    for ARG in "$@"; do
+      if [ "${ARG}" = "--" ]; then
+        _FOR_DOCKER="0"
+        continue;
+      fi
+      if [ "${_FOR_DOCKER}" = "1" ]; then
+        if [ "${ARG}" = "&&" ]; then
+            DOCKER_PARAMS="$DOCKER_PARAMS \&\&"
+            DOCKER__EVAL="$DOCKER__EVAL &&"
+            DOCKER_PARAMS_NOT_QUOTED="$DOCKER_PARAMS_NOT_QUOTED \&\&"
         else
-        PARAMS="$PARAMS \"$(quote "${ARG}")\""
-        _EVAL="$_EVAL \"$(quote "${ARG}")\""
+            if [ "$DOCKER_PARAMS" = "" ]; then
+                DOCKER_PARAMS="\"$(quote "${ARG}")\""
+                DOCKER__EVAL="\"$(quote "${ARG}")\""
+                DOCKER_PARAMS_NOT_QUOTED="${ARG}"
+            else
+                DOCKER_PARAMS="$DOCKER_PARAMS \"$(quote "${ARG}")\""
+                DOCKER__EVAL="$DOCKER__EVAL \"$(quote "${ARG}")\""
+                DOCKER_PARAMS_NOT_QUOTED="$DOCKER_PARAMS_NOT_QUOTED ${ARG}"
+            fi
         fi
-    fi
+      else
+        if [ "${ARG}" = "&&" ]; then
+            PARAMS="$PARAMS \&\&"
+            _EVAL="$_EVAL &&"
+        else
+            if [ "$PARAMS" = "" ]; then
+            PARAMS="\"$(quote "${ARG}")\""
+            _EVAL="\"$(quote "${ARG}")\""
+            else
+            PARAMS="$PARAMS \"$(quote "${ARG}")\""
+            _EVAL="$_EVAL \"$(quote "${ARG}")\""
+            fi
+        fi
+      fi
+    done
+
+    PARAMS="$(trim "$PARAMS")"
+    _EVAL="$(trim "$_EVAL")"
+
+    eval set -- "$PARAMS"
+
+    # echo "PARAMS>${PARAMS}<"
+    # echo "_EVAL>${_EVAL}<"
+    # echo "DOCKER_PARAMS>${DOCKER_PARAMS}<"
+    # echo "DOCKER__EVAL>${DOCKER__EVAL}<"
+    # echo "DOCKER_PARAMS_NOT_QUOTED>${DOCKER_PARAMS_NOT_QUOTED}<"
+
   fi
-done
+  # handling double -- on the list of arguments ^^^
 
-PARAMS="$(trim "$PARAMS")"
-_EVAL="$(trim "$_EVAL")"
+  # set -x # uncomment if you want to see final command
 
-eval set -- "$PARAMS"
+  DOCKERDEFAULTS="$(/bin/bash "${_DOCKERDEFAULTS}")"
 
-# echo "PARAMS>${PARAMS}<"
-# echo "_EVAL>${_EVAL}<"
-# echo "DOCKER_PARAMS>${DOCKER_PARAMS}<"
-# echo "DOCKER__EVAL>${DOCKER__EVAL}<"
-# echo "DOCKER_PARAMS_NOT_QUOTED>${DOCKER_PARAMS_NOT_QUOTED}<"
+  if [ "${?}" != "0" ]; then
 
-fi
-# handling double -- on the list of arguments ^^^
+      echo "${0} error: executing '${_DOCKERDEFAULTS}' have failed";
 
-# set -x # uncomment if you want to see final command
-
-DOCKERDEFAULTS="$(/bin/bash "${_DOCKERDEFAULTS}")"
-
-if [ "${?}" != "0" ]; then
-
-    echo "${0} error: executing '${_DOCKERDEFAULTS}' have failed";
-
-    exit 1
-fi
+      exit 1
+  fi
 
 # extracting dependencies.playwright from package.json
 PLAYWRIGHT_VER="$(cat <<EOF | node
@@ -453,12 +451,12 @@ process.stdout.write(parts[0]);
 EOF
 )";
 
-if [ "${?}" != "0" ]; then
+  if [ "${?}" != "0" ]; then
 
-    echo "${0} error: extracting dependencies.playwright from package.json failed";
+      echo "${0} error: extracting dependencies.playwright from package.json failed";
 
-    exit 1
-fi
+      exit 1
+  fi
 
 CMD="$(cat <<EOF
 docker run -i --rm --ipc host --cap-add SYS_ADMIN $S
@@ -470,14 +468,14 @@ node /ms-playwright-agent/node_modules/.bin/playwright test ${_ALLOWONLY} ${_PRO
 EOF
 )"
 
-printf "\n$CMD\n\n"
+  printf "\n$CMD\n\n"
 
-CMD="${CMD//\\$'\n'/}"
+  CMD="${CMD//\\$'\n'/}"
 
-eval $CMD
+  eval $CMD
     
-    exit 0
-fi
+  exit 0
+fi # end of    if [ "${_TARGET}" = "docker" ]; then    condition
 
 echo "${0} error: unhandled --target '${_TARGET}'"
 
