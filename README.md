@@ -15,6 +15,11 @@ The idea behind this repository is to create single point of execution to run pl
 
     6) and so on
 
+...to make it hassle free, to make developers to focus on coding and tests and not to think how things should be configured for each above case to make them work.    
+Testing tools should be always simply ready to use, more work dev will have around that, less tests he will write.
+
+
+
 Additionally
 
     a) all above should be done by executing single line of code
