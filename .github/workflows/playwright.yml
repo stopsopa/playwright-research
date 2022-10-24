@@ -45,15 +45,60 @@ jobs:
       - name: run server
         run: node server.js &
       - name: playwright tests
-        run: |          
+        run: |
           /bin/bash playwright.sh -t local --headless --project firefox
-  ubuntu-docker-chromium:
+
+  monterey-local-chromium:
     timeout-minutes: 60
-    runs-on: ubuntu-20.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
+    runs-on: macos-12
     strategy:
       fail-fast: false
       matrix:
-        version: [16, 17, 18] # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
+        version: [16, 17, 18]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.version }}
+      - name: yarn install
+        run: yarn
+      - name: install chromium
+        run: node node_modules/.bin/playwright install chromium
+      - name: run server
+        run: node server.js &
+      - name: playwright tests
+        run: |
+          /bin/bash playwright.sh -t local --headless --project chromium
+
+  monterey-local-firefox:
+    timeout-minutes: 60
+    runs-on: macos-12
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [16, 17, 18]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.version }}
+      - name: yarn install
+        run: yarn
+      - name: install firefox
+        run: node node_modules/.bin/playwright install firefox
+      - name: run server
+        run: node server.js &
+      - name: playwright tests
+        run: |
+          /bin/bash playwright.sh -t local --headless --project firefox
+
+  ubuntu-docker-chromium:
+    timeout-minutes: 60
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [16, 17, 18]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -68,11 +113,11 @@ jobs:
           /bin/bash playwright.sh -t docker --project chromium
   ubuntu-docker-firefox:
     timeout-minutes: 60
-    runs-on: ubuntu-20.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
-        version: [16, 17, 18] # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
+        version: [16, 17, 18]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -86,4 +131,4 @@ jobs:
         run: |
           /bin/bash playwright.sh -t docker --project firefox
 
-# https://playwright.dev/docs/ci          
+# https://playwright.dev/docs/ci
