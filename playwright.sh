@@ -105,8 +105,7 @@ while (( "$#" )); do
         _PROJECT="";
       else                                
         _PROJECT="--project=$2";                                          
-      fi                              
-      _PROJECT="";
+      fi     
       shift 2;
       ;;
     -t|--target)
