@@ -63,6 +63,7 @@ _PROJECT="--project=chromium"
 _TESTAGAINSTHOST="1"
 _DOCKERDEFAULTS="./playwright-docker-defaults.sh"
 _GENDOCKERDEFAULTS="0"
+ENVFILE=".env"
 
 PARAMS=""
 _EVAL=""
@@ -96,6 +97,18 @@ while (( "$#" )); do
       _DOCKERDEFAULTS="$2";
       shift 2;
       ;;
+    -e|--env)
+      if [ "$2" = "" ]; then
+        echo "$0 error: -e|--env value can't be empty" >&2 
+        exit 1;                                          
+      fi                 
+      if [ ! -f "${ENVFILE}" ]; then
+        echo "$0 error: -e|--env file '${ENVFILE}' doesn't exist" >&2 
+        exit 1;                                          
+      fi        
+      ENVFILE="$2";
+      shift 2;
+      ;;
     --allow-only)
       _ALLOWONLY="";
       shift;
@@ -105,7 +118,7 @@ while (( "$#" )); do
         _PROJECT="";
       else                                
         _PROJECT="--project=$2";                                          
-      fi     
+      fi        
       shift 2;
       ;;
     -t|--target)
@@ -156,6 +169,9 @@ while (( "$#" )); do
       ;;
   esac
 done
+
+export ENVFILE
+# export it for playwright.config.js to read for -t local mode
 
 if [ "${_GENDOCKERDEFAULTS}" = "1" ]; then
 
@@ -211,7 +227,9 @@ ${YELLOW}/bin/bash playwright.sh --generate-playwright-docker-defaults ${BOLD}--
     # ${GREEN}NOTICE${RESET}: you might also reset injecting any default params by passing /dev/null and then defining everything manually using double -- delimiters
         ${YELLOW}/bin/bash playwright.sh -t docker --docker-defaults /dev/null -- [params for "docker run"] -- [params for internal execution of playwright]
 
-        
+${YELLOW}/bin/bash playwright.sh ${BOLD}--env .env_test_against_cra${RESET}${YELLOW} -- --debug tests/e2e/sandbox/img.spec.js${RESET}
+    # by default playwright.sh script reads file .env in search for env vars but you might change it providing -e|--env param
+    # using this option will work for local and docker mode too
 
 ${YELLOW}/bin/bash playwright.sh ${BOLD}--target local${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}  
     # ${BOLD}--target local${RESET} is actually by default, so you don't really need to specify --target to launch on "local"
@@ -256,14 +274,14 @@ ${YELLOW}/bin/bash playwright.sh -t docker ${BOLD}--nohost${RESET} ${YELLOW} -- 
     # it is here to explicitly NOT add to "docker run" parameters:
     # --net host
     #   or
-    # --env HOST=host.docker.internal
+    # --env NODE_API_HOST=host.docker.internal
     # depends what OS will be detected
 
 Up to this point you've probably noticed that we are using delimiter ${RED}--${RESET} to separater parameters for playwright.sh script and parameters for playwright itself.
 But in "-t docker" mode we can use TWO pairs of ${RED}--${RESET} delimiter, this way we will have more control over not only playwright but also we will be able to inject some extra parameters to "docker run" itself.
 Example:
     ${YELLOW}/bin/bash playwright.sh -t docker --nohost ${RED}--${YELLOW} -v "\$(pwd)/.env_docker:/code/.env" ${RED}--${RESET}
-        # this way by using --nohost we will not inject --env HOST=host.docker.internal (in MAC case) and we can provide different .env_docker with HOST env var and mount it inside container as /code/.env
+        # this way by using --nohost we will not inject --env NODE_API_HOST=host.docker.internal (in MAC case) and we can provide different .env_docker with NODE_API_HOST env var and mount it inside container as /code/.env
         #    (this might be useful for launching docker tests against external domain - not against server on host/dev machine)
 
         # ${RED}WARNING${RESET}: important part here is that at the end we have second ${RED}--${RESET}, this way we are clearly indicating that parameter
@@ -331,7 +349,7 @@ if [ "${_TARGET}" = "docker" ]; then
 
   if [ "${_TESTAGAINSTHOST}" = "1" ]; then
       if [[ "$OSTYPE" == "darwin"* ]]; then
-          _HOSTHANDLER="--env HOST=host.docker.internal"
+          _HOSTHANDLER="--env NODE_API_HOST=host.docker.internal"
       else
           _HOSTHANDLER="--net host"
       fi
@@ -346,7 +364,7 @@ if [ "${_TARGET}" = "docker" ]; then
     fi
   done
 
-  DOCKER_PARAMS_NOT_QUOTED="-v \"$(pwd)/.env:/code/.env\""
+  DOCKER_PARAMS_NOT_QUOTED="-v \"$(pwd)/${ENVFILE}:/code/.env\""
   PARAMS=""
   _EVAL=""
   DOCKER_PARAMS=""
