@@ -57,6 +57,10 @@ if (!protocolRegex.test(process.env.BASE_URL)) {
  */
 const config = {
   testDir: "./tests",
+
+  // testIgnore: [ // https://playwright.dev/docs/api/class-testconfig#test-config-test-ignore
+  //   /macro-tests/
+  // ],
   snapshotDir: "./var/snapshotDir",
   /* Maximum time one test can run for. */
   timeout: 30 * 1000,
@@ -104,7 +108,6 @@ const config = {
     //   Authorization: `token ${process.env.API_TOKEN}`,
     // },
   },
-
   /* Configure projects for major browsers */
   projects: [
     {
