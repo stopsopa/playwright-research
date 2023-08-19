@@ -65,6 +65,10 @@ _DOCKERDEFAULTS="./playwright-docker-defaults.sh"
 _GENDOCKERDEFAULTS="0"
 ENVFILE=".env"
 
+#if [ "${CI}" != "" ]; then
+#  _ALLOWONLY="--forbid-only"
+#fi
+
 PARAMS=""
 _EVAL=""
 while (( "$#" )); do
@@ -279,7 +283,7 @@ ${YELLOW}/bin/bash playwright.sh -t docker ${BOLD}--nohost${RESET} ${YELLOW} -- 
     # --env NODE_API_HOST=host.docker.internal
     # depends what OS will be detected
 
-Up to this point you've probably noticed that we are using delimiter ${RED}--${RESET} to separater parameters for playwright.sh script and parameters for playwright itself.
+Up to this point you've probably noticed that we are using delimiter ${RED}--${RESET} to separate parameters for playwright.sh script and parameters for playwright itself.
 But in "-t docker" mode we can use TWO pairs of ${RED}--${RESET} delimiter, this way we will have more control over not only playwright but also we will be able to inject some extra parameters to "docker run" itself.
 Example:
     ${YELLOW}/bin/bash playwright.sh -t docker --nohost ${RED}--${YELLOW} -v "\$(pwd)/.env_docker:/code/.env" ${RED}--${RESET}
