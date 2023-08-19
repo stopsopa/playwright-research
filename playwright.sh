@@ -344,6 +344,12 @@ if [ "${_TARGET}" = "local" ]; then
     exit 1
   fi
 
+  cat <<EEE
+
+  node node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
+
+EEE
+
   node node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
 
   exit 0
@@ -481,13 +487,28 @@ EOF
       exit 1
   fi
 
+# testing how to run multiline bash script
+# cat <<EEE | docker run --rm -i --entrypoint="" \
+# mcr.microsoft.com/playwright:v1.27.1-focal \
+# bash
+# ls -la
+# pwd
+# date
+# EEE  
+
 CMD="$(cat <<EOF
-docker run -i --rm --ipc host --cap-add SYS_ADMIN $S
+cat <<EEE | docker run -i --rm --ipc host --cap-add SYS_ADMIN --entrypoint="" $S
 ${DOCKERDEFAULTS} $S
 ${DOCKER_PARAMS_NOT_QUOTED} $S
 ${_HOSTHANDLER} $S
 mcr.microsoft.com/playwright:v${PLAYWRIGHT_VER}-focal $S
-node /ms-playwright-agent/node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
+bash
+  set -e
+  echo ===========printenv===========
+  printenv
+  echo ===========printenv===========
+  /ms-playwright-agent/node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
+EEE
 EOF
 )"
 
@@ -495,7 +516,7 @@ EOF
 
   CMD="${CMD//\\$'\n'/}"
 
-  eval $CMD
+  eval "$CMD"
     
   exit 0
 fi # end of    if [ "${_TARGET}" = "docker" ]; then    condition
