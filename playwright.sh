@@ -215,7 +215,7 @@ Purpose of this script is to provide the same way to launch test natively on you
 
 First you might need to generate file with default parameters for "docker run" internal command (optional: only if you will use "-t docker" mode):
 ${YELLOW}/bin/bash playwright.sh ${BOLD}--generate-playwright-docker-defaults${RESET}
-    # to generate ./playwright-docker-defaults.sh
+    # to generate config file ./playwright-docker-defaults.sh
 
     # you might also specify different path for target 
 ${YELLOW}/bin/bash playwright.sh --generate-playwright-docker-defaults ${BOLD}--docker-defaults ./playwright-docker-defaults2.sh${RESET}
@@ -242,7 +242,9 @@ ${YELLOW}/bin/bash playwright.sh ${BOLD}--headless${RESET}${YELLOW} -- ... optio
     # WARNING: be aware that this is params only handled/consumed by this script only 
 
 ${YELLOW}/bin/bash playwright.sh ${BOLD}--allow-only${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}
-    # it's here because ${BOLD}--forbid-only${RESET} is added by default
+    # it's here because native playwright cli option ${BOLD}--forbid-only${RESET} is added by default in this script
+    # but not natively, natively in playwright it.only() is allowed by default
+    # this this flag --allow-only is consumed by this bash script in order to bring back default behavior of playwright cli
     # WARNING: be aware that this is params only handled/consumed by this script only 
 
 ${YELLOW}/bin/bash playwright.sh -- ${BOLD}--workers=5${RESET}
@@ -257,8 +259,8 @@ ${YELLOW}/bin/bash playwright.sh ${BOLD}--project all${RESET}${YELLOW} -- ... op
     #               ${BOLD}--project=firefox${RESET}
     # it's here because ${BOLD}--project chromium${RESET} is added by default
     # ${BOLD}--project firefox${RESET}   - this will change browser to firefox
-    # ${BOLD}--project all${RESET}       - this will launch against all registered browsers 
-    #       (this will internally force to not pass --project arg to playwright - this way test will be executed against all registered browsers)
+    # ${BOLD}--project all${RESET}       - this will launch against all registered browsers (registered in playwright.config.js)
+    #       (this will internally in this bash script force to not pass --project arg to playwright - this way test will be executed against all registered browsers)
 
     # WARNING: be aware that this is params only handled/consumed by this script only 
         # there is one edge case
@@ -311,7 +313,7 @@ Example:
         # and this is done deliberately to have more flexibility in injecting different .env files for different purposes without need to manipulate playwright-docker-defaults.sh.
 
         # Yet another way of thinking is treating playwright-docker-defaults.sh as reversed .gitignore to define what from our project SHOULD be mounted into our container for testing.
-        # By "reversed" .gitignore I meain the fact that .gitignore specifies what should be OMITTED not included, where playwright-docker-defaults.sh describes what should be MOUNTED into container.
+        # By "reversed" .gitignore I meain the fact that .gitignore specifies what should be OMITTED (not included), where playwright-docker-defaults.sh describes what should be MOUNTED into container.
 
         # So at this point you can see that playwright-docker-defaults.sh and double -- works independently mainly to mount any .env without need to manipulate playwright-docker-defaults.sh
         # In other words: by design developer is encouraged to use more often double -- delimters to switch different .env files over changing playwright-docker-defaults.sh files - this should be more rare.
