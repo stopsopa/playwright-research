@@ -51,7 +51,7 @@ Additionally
 To achieve all above there is few "things" needed:
 - playwright.sh file
 - playwright-docker-defaults.sh file (can be generated with defaults by playwright.sh)
-- playwright.sh will require [playwright browser intalled globally](https://playwright.dev/docs/intro#installing-playwright) for local executing
+- playwright.sh will require [playwright browser installed globally](https://playwright.dev/docs/intro#installing-playwright) for local executing
 - playwright.sh will require to have "[playwright](https://www.npmjs.com/package/playwright)" and "[@playwright/test](https://www.npmjs.com/package/@playwright/test)" installed in local package.json dependencies (both in the same version)
 - you need to have some tests (by default in "tests" directory)
 - you also have to have playwright.config.js (obviously)
