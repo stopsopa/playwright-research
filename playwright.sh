@@ -239,13 +239,13 @@ ${YELLOW}/bin/bash playwright.sh ${BOLD}--target docker${RESET}${YELLOW} -- ... 
 
 ${YELLOW}/bin/bash playwright.sh ${BOLD}--headless${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}
     # it's here because ${BOLD}--headed${RESET} is added by default (by default in "--target local" but not in "--target docker")
-    # WARNING: be aware that this is params only handled/consumed by this script only 
+    # WARNING: be aware that this params is handled/consumed by this script only 
 
 ${YELLOW}/bin/bash playwright.sh ${BOLD}--allow-only${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}
     # it's here because native playwright cli option ${BOLD}--forbid-only${RESET} is added by default in this script
     # but not natively, natively in playwright it.only() is allowed by default
     # this this flag --allow-only is consumed by this bash script in order to bring back default behavior of playwright cli
-    # WARNING: be aware that this is params only handled/consumed by this script only 
+    # WARNING: be aware that this params is handled/consumed by this script only  
 
 ${YELLOW}/bin/bash playwright.sh -- ${BOLD}--workers=5${RESET}
     # this will override hardcoded ${BOLD}--workers=1${RESET} (which is added by default)
@@ -262,7 +262,7 @@ ${YELLOW}/bin/bash playwright.sh ${BOLD}--project all${RESET}${YELLOW} -- ... op
     # ${BOLD}--project all${RESET}       - this will launch against all registered browsers (registered in playwright.config.js)
     #       (this will internally in this bash script force to not pass --project arg to playwright - this way test will be executed against all registered browsers)
 
-    # WARNING: be aware that this is params only handled/consumed by this script only 
+    # WARNING: be aware that this params is handled/consumed by this script only  
         # there is one edge case
             /bin/bash playwright.sh ${BOLD}--project all${RESET} -- ${BOLD}--project=firefox${RESET} ... optionally other native params for playwright
                 this is the same as 
@@ -272,7 +272,7 @@ ${YELLOW}/bin/bash playwright.sh ${BOLD}--project all${RESET}${YELLOW} -- ... op
 ${GREEN}ALL PARAMS BELOW ARE USED ONLY IF playwright.sh IS SWITCHED TO ${BOLD}--target docker${RESET}${GREEN} mode:${RESET}
 
 ${YELLOW}/bin/bash playwright.sh -t docker ${BOLD}--nohost${RESET} ${YELLOW} -- ... optionally other native params for playwright${RESET}
-    # WARNING: be aware that this is params only handled/consumed by this script only 
+    # WARNING: be aware that this params is handled/consumed by this script only  
     # it is here to explicitly NOT add to "docker run" parameters:
     # --net host
     #   or
