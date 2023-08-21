@@ -57,7 +57,7 @@ if (!protocolRegex.test(process.env.BASE_URL)) {
  */
 const config = {
   testDir: "./tests",
-
+  //testMatch: process.env.PLAYWRIGHT_TEST_MATH || "**/*.e2e.js", // https://playwright.dev/docs/test-configuration#testing-options
   // testIgnore: [ // https://playwright.dev/docs/api/class-testconfig#test-config-test-ignore
   //   /macro-tests/
   // ],
