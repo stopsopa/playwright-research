@@ -1,4 +1,7 @@
 // @ts-check
+
+// PLAYWRIGHT_TEST_MATCH="**/*.js" /bin/bash playwright.sh -- test-volatile/example.spec.js
+ 
 const { test, expect } = require("@playwright/test");
 
 test.beforeEach(async ({ page }) => {

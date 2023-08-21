@@ -20,7 +20,7 @@ inspect:
 
 # from: https://github.com/microsoft/playwright/issues/7035
 watch:
-	node node_modules/.bin/chokidar 'tests/**/*.spec.js' --initial -c 'node node_modules/.bin/playwright test --headed --forbid-only --project=chromium --workers=1 --retries=0 tests/001loading.spec.js'
+	node node_modules/.bin/chokidar 'tests/**/*.e2e.js' --initial -c 'node node_modules/.bin/playwright test --headed --forbid-only --project=chromium --workers=1 --retries=0 tests/001loading.e2e.js'
 
 codegen:
 	node node_modules/.bin/playwright codegen wikipedia.org

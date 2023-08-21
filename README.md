@@ -116,3 +116,14 @@ https://playwright.dev/docs/intro
 - [x] integrate with GH Actions
 - [x] build some example tests
 - [x] make docker image version package.json '@playwright/test' driven
+
+# DEV NOTES
+
+```
+
+node server.js
+# make sure to have .env file
+/bin/bash playwright.sh 
+
+
+```
