@@ -107,6 +107,7 @@ _PROJECT="--project=chromium"
 _TESTAGAINSTHOST="1"
 _DOCKERDEFAULTS="./playwright-docker-defaults.sh"
 _GENDOCKERDEFAULTS="0"
+_GETPLAYWRIGHTVERSION="0"
 ENVFILE=".env"
 
 #if [ "${CI}" != "" ]; then
@@ -123,6 +124,10 @@ while (( "$#" )); do
       ;;
     --generate-playwright-docker-defaults)
       _GENDOCKERDEFAULTS="1";
+      shift;
+      ;;
+    --version)
+      _GETPLAYWRIGHTVERSION="1";
       shift;
       ;;
     --headless)
@@ -217,6 +222,16 @@ while (( "$#" )); do
       ;;
   esac
 done
+
+if [ "${_GETPLAYWRIGHTVERSION}" = "1" ]; then
+  set -e
+
+  extractVersion
+
+  printf "${PLAYWRIGHT_VER}"
+
+  exit 0;
+fi
 
 export ENVFILE
 # export it for playwright.config.js to read for -t local mode
