@@ -78,7 +78,7 @@ const dependencies = {
   ...package.devDependencies,
 };
 
-const ver = dependencies.playwright;
+const ver = dependencies.playwright || dependencies['@playwright/test'];
 
 const parts = ver.match(/\d+\.\d+\.\d+/);
 
