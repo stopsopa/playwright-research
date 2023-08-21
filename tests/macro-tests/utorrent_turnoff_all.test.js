@@ -2,9 +2,9 @@
  * Comment temporarly: testIgnore in playwright.config.js
  * and then
  * 
- * /bin/bash playwright.sh -- --debug tests/macro-tests/utorrent_turnoff_all.spec.js
+ * /bin/bash playwright.sh -- --debug tests/macro-tests/utorrent_turnoff_all.test.js
  * or
- * /bin/bash playwright.sh tests/macro-tests/utorrent_turnoff_all.spec.js
+ * /bin/bash playwright.sh tests/macro-tests/utorrent_turnoff_all.test.js
  */
 
 const url = `https://utweb.trontv.com/gui/index.html?v=1.2.10.5207&localauth=localapi460f5b7b8d4be49:#/library`;
