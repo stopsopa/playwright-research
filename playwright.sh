@@ -55,6 +55,50 @@ function quote {
   echo "$1" | sed -E 's/\"/\\"/g'
 }
 
+function extractVersion() {
+
+# extracting dependencies.playwright from package.json
+PLAYWRIGHT_VER="$(cat <<EOF | node
+const fs = require("fs");
+
+const file = "./package.json";
+
+if (!fs.existsSync(file)) {
+  throw new Error("playwright.sh error: file " + file + " doesn't exist");
+}
+
+if (!fs.lstatSync(file).isFile()) {
+  throw new Error("playwright.sh error: path " + file + " is not a file");
+}
+
+const package = require(file);
+
+const dependencies = {
+  ...package.dependencies,
+  ...package.devDependencies,
+};
+
+const ver = dependencies.playwright;
+
+const parts = ver.match(/\d+\.\d+\.\d+/);
+
+if (!parts || parts.length !== 1) {
+  throw new Error("playwright.sh error: " + file + " playwright dependency is not defined");
+}
+
+process.stdout.write(parts[0]);
+
+EOF
+)";
+
+  if [ "${?}" != "0" ]; then
+
+      echo "${0} error: extracting dependencies.playwright from package.json failed";
+
+      exit 1
+  fi
+}
+
 _TARGET="local";
 _HELP="0";
 _HEADLESS="--headed"
@@ -446,46 +490,7 @@ if [ "${_TARGET}" = "docker" ]; then
       exit 1
   fi
 
-# extracting dependencies.playwright from package.json
-PLAYWRIGHT_VER="$(cat <<EOF | node
-const fs = require("fs");
-
-const file = "./package.json";
-
-if (!fs.existsSync(file)) {
-  throw new Error("playwright.sh error: file " + file + " doesn't exist");
-}
-
-if (!fs.lstatSync(file).isFile()) {
-  throw new Error("playwright.sh error: path " + file + " is not a file");
-}
-
-const package = require(file);
-
-const dependencies = {
-  ...package.dependencies,
-  ...package.devDependencies,
-};
-
-const ver = dependencies.playwright;
-
-const parts = ver.match(/\d+\.\d+\.\d+/);
-
-if (!parts || parts.length !== 1) {
-  throw new Error("playwright.sh error: " + file + " playwright dependency is not defined");
-}
-
-process.stdout.write(parts[0]);
-
-EOF
-)";
-
-  if [ "${?}" != "0" ]; then
-
-      echo "${0} error: extracting dependencies.playwright from package.json failed";
-
-      exit 1
-  fi
+extractVersion
 
 # testing how to run multiline bash script
 # cat <<EEE | docker run --rm -i --entrypoint="" \
