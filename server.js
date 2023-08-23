@@ -116,6 +116,6 @@ app.use(
 );
 
 app.listen(process.env.NODE_API_PORT, process.env.NODE_API_HOST, () => {
-  console.log(`\n 🌎  Server is running ` + `http://${process.env.NODE_API_HOST}:${process.env.PORT}\n`);
+  console.log(`\n 🌎  Server is running ` + `http://${process.env.NODE_API_HOST}:${process.env.NODE_API_PORT}\n`);
   ready = true;
 });
