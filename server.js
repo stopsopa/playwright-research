@@ -34,9 +34,9 @@ function check(val, name) {
   }
 }
 
-check(process.env.HOST, "HOST");
+check(process.env.NODE_API_HOST, "NODE_API_HOST");
 
-check(process.env.PORT, "PORT");
+check(process.env.NODE_API_PORT, "NODE_API_PORT");
 
 const web = path.resolve(__dirname, "public");
 
@@ -115,7 +115,7 @@ app.use(
   serveIndex(web, { icons: true })
 );
 
-app.listen(process.env.PORT, process.env.HOST, () => {
-  console.log(`\n 🌎  Server is running ` + `http://${process.env.HOST}:${process.env.PORT}\n`);
+app.listen(process.env.NODE_API_PORT, process.env.NODE_API_HOST, () => {
+  console.log(`\n 🌎  Server is running ` + `http://${process.env.NODE_API_HOST}:${process.env.NODE_API_PORT}\n`);
   ready = true;
 });
