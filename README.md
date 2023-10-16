@@ -1,6 +1,16 @@
 # todo
 README.md is not finished
 
+# known issue
+
+if you would like to test self signed cert https link on the host machine then read more about --add-host=local.something.dev.com:host-gateway flag:
+https://medium.com/@TimvanBaarsen/how-to-connect-to-the-docker-host-from-inside-a-docker-container-112b4c71bc66
+g(medium.com Tim van Baarsen How to connect to the Docker host from inside a Docker container?)
+
+```
+/bin/bash playwright.sh --target docker --nohost -- --add-host=local.something.dev.com:host-gateway -v "$(pwd)/.env.local:/code/.env" -- test/e2e/product-create.e2e.js
+```
+
 # What is purpose of this repository?
 
 The idea behind this repository is to create single point of execution to run playwright tests in most portable way possible across different scenarios:
