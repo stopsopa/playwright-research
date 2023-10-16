@@ -154,11 +154,11 @@ while (( "$#" )); do
       if [ "$2" = "" ]; then
         echo "$0 error: -e|--env value can't be empty" >&2 
         exit 1;                                          
-      fi                 
-      if [ ! -f "${ENVFILE}" ]; then
-        echo "$0 error: -e|--env file '${ENVFILE}' doesn't exist" >&2 
+      fi                  
+      if [ ! -f "${2}" ]; then
+        echo "$0 error: -e|--env file '${2}' doesn't exist 3" >&2 
         exit 1;                                          
-      fi        
+      fi         
       ENVFILE="$2";
       shift 2;
       ;;
