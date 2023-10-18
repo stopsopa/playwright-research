@@ -110,10 +110,6 @@ _GENDOCKERDEFAULTS="0"
 _GETPLAYWRIGHTVERSION="0"
 ENVFILE=".env"
 
-#if [ "${CI}" != "" ]; then
-#  _ALLOWONLY="--forbid-only"
-#fi
-
 PARAMS=""
 _EVAL=""
 while (( "$#" )); do
@@ -304,7 +300,7 @@ ${YELLOW}/bin/bash playwright.sh --generate-playwright-docker-defaults ${BOLD}--
     # ${GREEN}NOTICE${RESET}: you might also reset injecting any default params by passing /dev/null and then defining everything manually using double -- delimiters
         ${YELLOW}/bin/bash playwright.sh -t docker --docker-defaults /dev/null -- [params for "docker run"] -- [params for internal execution of playwright]
 
-${YELLOW}/bin/bash playwright.sh ${BOLD}--env .env_test_against_cra${RESET}${YELLOW} -- --debug tests/e2e/sandbox/img.spec.js${RESET}
+${YELLOW}/bin/bash playwright.sh ${BOLD}--env .env_test_against_vite${RESET}${YELLOW} -- --debug tests/e2e/sandbox/img.spec.js${RESET}
     # by default playwright.sh script reads file .env in search for env vars but you might change it providing -e|--env param
     # using this option will work for local and docker mode too
 
@@ -407,11 +403,9 @@ _EVAL="$(trim "$_EVAL")"
 eval set -- "$PARAMS"
 
 if [ "${_TARGET}" = "local" ]; then
-
   set -e
 
   if [ ! -f "node_modules/.bin/playwright" ]; then
-
     echo "${0} error: node_modules/.bin/playwright doesn't exist"
 
     exit 1
@@ -422,6 +416,8 @@ if [ "${_TARGET}" = "local" ]; then
   node node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
 
 EEE
+
+node -v
 
   node node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
 
@@ -510,7 +506,12 @@ if [ "${_TARGET}" = "docker" ]; then
 
   # set -x # uncomment if you want to see final command
 
-  DOCKERDEFAULTS="$(/bin/bash "${_DOCKERDEFAULTS}")"
+  PASS_NO_HOST=""
+  if [ "${_TESTAGAINSTHOST}" = "0" ]; then
+    PASS_NO_HOST="--nohost"
+  fi
+
+  DOCKERDEFAULTS="$(/bin/bash "${_DOCKERDEFAULTS}" ${PASS_NO_HOST})"
 
   if [ "${?}" != "0" ]; then
 
