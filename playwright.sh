@@ -150,11 +150,11 @@ while (( "$#" )); do
       if [ "$2" = "" ]; then
         echo "$0 error: -e|--env value can't be empty" >&2 
         exit 1;                                          
-      fi                  
+      fi                    
       if [ ! -f "${2}" ]; then
-        echo "$0 error: -e|--env file '${2}' doesn't exist 3" >&2 
+        echo "$0 error: -e|--env file '${2}' doesn't exist" >&2 
         exit 1;                                          
-      fi         
+      fi       
       ENVFILE="$2";
       shift 2;
       ;;
@@ -403,9 +403,11 @@ _EVAL="$(trim "$_EVAL")"
 eval set -- "$PARAMS"
 
 if [ "${_TARGET}" = "local" ]; then
+
   set -e
 
   if [ ! -f "node_modules/.bin/playwright" ]; then
+
     echo "${0} error: node_modules/.bin/playwright doesn't exist"
 
     exit 1
