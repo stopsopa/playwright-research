@@ -14,12 +14,15 @@ module.exports = (setup) => {
     help: {
       command: `
 set -e  
-git config core.excludesFile .git/.gitignore_local
+
 source .env
        
 cat <<EEE
 
   GitHub: $(git ls-remote --get-url origin | awk '{\$1=\$1};1' | tr -d '\\n' | sed -E 's/git@github\\.com:([^/]+)\\/([^\\.]+)\\.git/https:\\/\\/github.com\\/\\1\\/\\2/g')  
+
+  app:
+    \${NODE_API_PROTOCOL}://\${NODE_API_HOST}:\${NODE_API_PORT}
 
   run all in chromium:
     node node_modules/.bin/playwright test --headed --forbid-only --project=chromium --workers=1  

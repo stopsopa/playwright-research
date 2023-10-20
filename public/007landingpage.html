@@ -10,5 +10,10 @@
   </head>
   <body>
     <h1>All good</h1>
+    <pre></pre>
+    <script>
+      const pre = document.querySelector("pre");
+      pre.innerText = document.documentElement.outerHTML.replace(/\s*<pre>.*?<\/pre>/, "");
+    </script>
   </body>
 </html>
