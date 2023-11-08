@@ -59,9 +59,10 @@ const config = {
   // testDir: "./tests",
   testDir: __dirname,
   testMatch: process.env.PLAYWRIGHT_TEST_MATCH || "**/*.e2e.js", // https://playwright.dev/docs/test-configuration#testing-options
-  // testIgnore: [ // https://playwright.dev/docs/api/class-testconfig#test-config-test-ignore
+  //testIgnore: [ // https://playwright.dev/docs/api/class-testconfig#test-config-test-ignore
+  //  '**/.git/**',
   //   /macro-tests/
-  // ],
+  //],
   snapshotDir: "./var/snapshotDir",
   /* Maximum time one test can run for. */
   timeout: 30 * 1000,
