@@ -1,5 +1,6 @@
-# todo
-README.md is not finished
+# build custom image
+
+[docker/README.md](docker/README.md)
 
 # known issue
 
