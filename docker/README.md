@@ -12,7 +12,11 @@ https://hub.docker.com/repository/docker/monstersmart/playwright/general
 
 found info how to build https://github.com/microsoft/playwright/issues/5154#issuecomment-767410926
 
-Do below on the modified [PR](https://github.com/stopsopa/playwright/pull/1) prepared for particular build
+>
+> [!CAUTION]
+> Do below on the modified [PR](https://github.com/stopsopa/playwright/pull/1) prepared for particular build
+>
+
 
 ```sh
 
