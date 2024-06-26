@@ -14,7 +14,7 @@ found info how to build https://github.com/microsoft/playwright/issues/5154#issu
 
 Do below on the modified [PR](https://github.com/stopsopa/playwright/pull/1) prepared for particular build
 
-```
+```sh
 
 mkdir xxx
 cd xxx
