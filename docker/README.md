@@ -27,9 +27,9 @@ node -v
 # make sure to be on node -v -> v20.15.0
 npm ci
 npm run build
-/bin/bash ./utils/docker/build.sh --arm64 focal monstersmart/playwright:v1.45.0-focal-just-chrome
+/bin/bash ./utils/docker/build.sh --arm64 focal monstersmart/playwright:v1.45.0-focal-just-chromium
 
 # then push
-   docker push monstersmart/playwright:v1.45.0-focal-just-chrome
+   docker push monstersmart/playwright:v1.45.0-focal-just-chromium
 
 ```
