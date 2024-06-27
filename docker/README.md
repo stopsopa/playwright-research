@@ -27,15 +27,9 @@ node -v
 # make sure to be on node -v -> v20.15.0
 npm ci
 npm run build
-/bin/bash ./utils/docker/build.sh --arm64 focal monstersmart/playwright:v1.45.0-focal-with-core
+/bin/bash ./utils/docker/build.sh --arm64 focal monstersmart/playwright:v1.45.0-focal-just-chrome
 
-# inspect if all is right
-#   docker run -it monstersmart/playwright:v1.45.0-focal-with-core bash
-# and run inside the container
-#   node /ms-playwright-agent/node_modules/.bin/playwright-core --help
-# 
 # then push
-#   docker push monstersmart/playwright:v1.45.0-focal-with-core
-# 
+   docker push monstersmart/playwright:v1.45.0-focal-just-chrome
 
 ```
