@@ -2,6 +2,10 @@
 
 [docker/README.md](docker/README.md)
 
+# list versions
+
+https://mcr.microsoft.com/en-us/artifact/mar/playwright/tags
+
 # known issue
 
 if you would like to test self signed cert https link on the host machine then read more about --add-host=local.something.dev.com:host-gateway flag:
