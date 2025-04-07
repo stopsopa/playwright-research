@@ -541,9 +541,9 @@ ${_HOSTHANDLER} $S
 mcr.microsoft.com/playwright:v${PLAYWRIGHT_VER}-focal $S
 bash
   set -e
-  echo ===========printenv===========
+  echo ===========printenv== to see PLAYWRIGHT_TEST_MATCH =========  
   printenv
-  echo ===========printenv===========
+  echo ===========printenv== to see PLAYWRIGHT_TEST_MATCH =========  
   /ms-playwright-agent/node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
 EEE
 EOF
