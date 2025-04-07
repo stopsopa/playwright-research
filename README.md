@@ -4,7 +4,7 @@
 
 # list versions
 
-https://mcr.microsoft.com/en-us/artifact/mar/playwright/tags
+https://stopsopa.github.io/pages/docker/index.html#list-all-versions-of-given-tag
 
 # known issue
 
