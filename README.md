@@ -6,6 +6,19 @@
 
 https://stopsopa.github.io/pages/docker/index.html#list-all-versions-of-given-tag
 
+# cli message
+
+```
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+```
+
 # known issue
 
 if you would like to test self signed cert https link on the host machine then read more about --add-host=local.something.dev.com:host-gateway flag:
