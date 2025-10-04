@@ -7,6 +7,8 @@ const protocolRegex = /^https?:\/\//;
 
 require("dotenv").config();
 
+const log = (...args) => console.log("playwright.config.js log:", ...args);
+
 function envcheck(name, ret) {
   if (typeof process.env[name] !== "string") {
     if (ret) return false;
@@ -24,7 +26,7 @@ function envcheck(name, ret) {
 }
 
 if (envcheck("BASE_URL", true)) {
-  console.log(`existing BASE_URL: >${process.env.BASE_URL}<`);
+  log(`existing BASE_URL: >${process.env.BASE_URL}<`);
 } else {
   envcheck("NODE_API_PROTOCOL");
 
@@ -40,7 +42,7 @@ if (envcheck("BASE_URL", true)) {
     process.env.BASE_URL += `:${process.env.NODE_API_PORT}`;
   }
 
-  console.log(`generated BASE_URL: >${process.env.BASE_URL}<`);
+  log(`generated BASE_URL: >${process.env.BASE_URL}<`);
 }
 
 envcheck("BASE_URL");
