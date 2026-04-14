@@ -8,107 +8,43 @@ on:
 
 env:
   NODE_VERSION: 24
+
 jobs:
-  ubuntu-local-chromium:
+  playwright-tests:
     timeout-minutes: 60
-    runs-on: ubuntu-20.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
+    name: ${{ matrix.os }}-${{ matrix.env_type }}-${{ matrix.project }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04]
+        env_type: [local, docker]
+        project: [chromium, firefox]
+        include:
+          - os: macos-12
+            env_type: local
+            project: chromium
+          - os: macos-12
+            env_type: local
+            project: firefox
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: yarn install
+      - name: Install dependencies
         run: yarn
-      - name: install chromium
-        run: node node_modules/.bin/playwright install chromium
-      - name: run server
+      - name: Install Playwright browser
+        if: matrix.env_type == 'local'
+        run: node node_modules/.bin/playwright install ${{ matrix.project }}
+      - name: Run server
         run: node server.js &
-      - name: playwright tests
+      - name: Run Playwright tests
         run: |
-          /bin/bash playwright.sh -t local --headless --project chromium
-  ubuntu-local-firefox:
-    timeout-minutes: 60
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: yarn install
-        run: yarn
-      - name: install firefox
-        run: node node_modules/.bin/playwright install firefox
-      - name: run server
-        run: node server.js &
-      - name: playwright tests
-        run: |
-          /bin/bash playwright.sh -t local --headless --project firefox
-
-  monterey-local-chromium:
-    timeout-minutes: 60
-    runs-on: macos-12
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: yarn install
-        run: yarn
-      - name: install chromium
-        run: node node_modules/.bin/playwright install chromium
-      - name: run server
-        run: node server.js &
-      - name: playwright tests
-        run: |
-          /bin/bash playwright.sh -t local --headless --project chromium
-
-  monterey-local-firefox:
-    timeout-minutes: 60
-    runs-on: macos-12
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: yarn install
-        run: yarn
-      - name: install firefox
-        run: node node_modules/.bin/playwright install firefox
-      - name: run server
-        run: node server.js &
-      - name: playwright tests
-        run: |
-          /bin/bash playwright.sh -t local --headless --project firefox
-
-  ubuntu-docker-chromium:
-    timeout-minutes: 60
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: yarn install
-        run: yarn
-      - name: run server
-        run: node server.js &
-      - name: playwright tests
-        run: |
-          /bin/bash playwright.sh -t docker --project chromium
-  ubuntu-docker-firefox:
-    timeout-minutes: 60
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: yarn install
-        run: yarn
-      - name: run server
-        run: node server.js &
-      - name: playwright tests
-        run: |
-          /bin/bash playwright.sh -t docker --project firefox
+          if [ "${{ matrix.env_type }}" == "local" ]; then
+            /bin/bash playwright.sh -t local --headless --project ${{ matrix.project }}
+          else
+            /bin/bash playwright.sh -t docker --project ${{ matrix.project }}
+          fi
 
 # https://playwright.dev/docs/ci
