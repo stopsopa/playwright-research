@@ -14,7 +14,7 @@ found info how to build https://github.com/microsoft/playwright/issues/5154#issu
 
 >
 > [!CAUTION]
-> Do below on the modified [PR](https://github.com/stopsopa/playwright/pull/1) prepared for particular build
+> See final changes for each consecutive build https://github.com/stopsopa/playwright/pulls
 >
 
 
