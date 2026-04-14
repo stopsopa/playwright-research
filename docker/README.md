@@ -51,3 +51,7 @@ npm run build
    docker push monstersmart/playwright:v1.45.0-focal-just-chromium
 
 ```
+
+Further testing starts from here:
+
+https://github.com/stopsopa/playwright/pull/2/changes#diff-bbb64ab4bd6463c3339113b403525b158daf1e3484dfdf3f1aa1babed37a81aaR47
