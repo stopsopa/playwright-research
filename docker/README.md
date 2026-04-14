@@ -28,7 +28,8 @@ node -v
 # make sure to be on node -v -> v24.14.1 for old noble
 npm ci
 npm run build
-/bin/bash ./utils/docker/build.sh --arm64 focal monstersmart/playwright:v1.45.0-focal-just-chromium
+# /bin/bash ./utils/docker/build.sh --arm64 focal monstersmart/playwright:v1.45.0-focal-just-chromium   --- this is for old image
+/bin/bash ./utils/docker/build.sh --arm64 noble monstersmart/playwright:v1.59.1-noble-just-chromium
   # where --arm64 argument is really not used but it is provided here to just follow previous argument order
 
 # then push
