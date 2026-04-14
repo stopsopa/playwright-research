@@ -26,6 +26,7 @@ git clone git@github.com:stopsopa/playwright.git .
 node -v
 # make sure to be on node -v -> v20.15.0 for old focal
 # make sure to be on node -v -> v24.14.1 for old noble
+docker login
 npm ci
 npm run build
 # /bin/bash ./utils/docker/build.sh --arm64 focal monstersmart/playwright:v1.45.0-focal-just-chromium   --- this is for old image
