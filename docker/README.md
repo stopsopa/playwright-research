@@ -15,7 +15,15 @@ found info how to build https://github.com/microsoft/playwright/issues/5154#issu
 >
 > [!CAUTION]
 > See final changes for each consecutive build https://github.com/stopsopa/playwright/pulls
->
+
+First determine node version from the target image:
+```
+
+docker run -it mcr.microsoft.com/playwright:v1.59.1-noble node --version
+
+```
+
+that will be needed to setup asdf node.js version for the branch we will create
 
 
 ```sh
