@@ -28,6 +28,7 @@ node -v
 npm ci
 npm run build
 /bin/bash ./utils/docker/build.sh --arm64 focal monstersmart/playwright:v1.45.0-focal-just-chromium
+  # where --arm64 argument is really not used but it is provided here to just follow previous argument order
 
 # then push
    docker push monstersmart/playwright:v1.45.0-focal-just-chromium
