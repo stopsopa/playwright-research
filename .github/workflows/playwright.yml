@@ -4,19 +4,18 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+
+env:
+  NODE_VERSION: 24
 jobs:
   ubuntu-local-chromium:
     timeout-minutes: 60
     runs-on: ubuntu-20.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [16, 17, 18] # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.version }}
+          node-version: ${{ env.NODE_VERSION }}
       - name: yarn install
         run: yarn
       - name: install chromium
@@ -29,15 +28,11 @@ jobs:
   ubuntu-local-firefox:
     timeout-minutes: 60
     runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [16, 17, 18]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.version }}
+          node-version: ${{ env.NODE_VERSION }}
       - name: yarn install
         run: yarn
       - name: install firefox
@@ -51,15 +46,11 @@ jobs:
   monterey-local-chromium:
     timeout-minutes: 60
     runs-on: macos-12
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [16, 17, 18]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.version }}
+          node-version: ${{ env.NODE_VERSION }}
       - name: yarn install
         run: yarn
       - name: install chromium
@@ -73,15 +64,11 @@ jobs:
   monterey-local-firefox:
     timeout-minutes: 60
     runs-on: macos-12
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [16, 17, 18]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.version }}
+          node-version: ${{ env.NODE_VERSION }}
       - name: yarn install
         run: yarn
       - name: install firefox
@@ -95,15 +82,11 @@ jobs:
   ubuntu-docker-chromium:
     timeout-minutes: 60
     runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [16, 17, 18]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.version }}
+          node-version: ${{ env.NODE_VERSION }}
       - name: yarn install
         run: yarn
       - name: run server
@@ -114,15 +97,11 @@ jobs:
   ubuntu-docker-firefox:
     timeout-minutes: 60
     runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [16, 17, 18]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.version }}
+          node-version: ${{ env.NODE_VERSION }}
       - name: yarn install
         run: yarn
       - name: run server
