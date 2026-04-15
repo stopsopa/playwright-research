@@ -57,18 +57,18 @@ if [ "${?}" != "0" ]; then
   exit 1
 fi
 
-GRAY=$(tput setaf 244)
-BLACK=$(tput setaf 0)
-RED=$(tput setaf 1)
-GREEN=$(tput setaf 2)
-YELLOW=$(tput setaf 3)
-BLUE=$(tput setaf 4)
-MAGENTA=$(tput setaf 5)
-CYAN=$(tput setaf 6)
-WHITE=$(tput setaf 7)
-BOLD=$(tput bold)
-REVERSE=$(tput rev)
-RESET=$(tput sgr0)
+GRAY=$(tput setaf 244 2>/dev/null || echo "")
+BLACK=$(tput setaf 0 2>/dev/null || echo "")
+RED=$(tput setaf 1 2>/dev/null || echo "")
+GREEN=$(tput setaf 2 2>/dev/null || echo "")
+YELLOW=$(tput setaf 3 2>/dev/null || echo "")
+BLUE=$(tput setaf 4 2>/dev/null || echo "")
+MAGENTA=$(tput setaf 5 2>/dev/null || echo "")
+CYAN=$(tput setaf 6 2>/dev/null || echo "")
+WHITE=$(tput setaf 7 2>/dev/null || echo "")
+BOLD=$(tput bold 2>/dev/null || echo "")
+REVERSE=$(tput rev 2>/dev/null || echo "")
+RESET=$(tput sgr0 2>/dev/null || echo "")
 
 function quote {
   echo "$1" | sed -E 's/\"/\\"/g'
@@ -464,13 +464,13 @@ if [ "${_TARGET}" = "local" ]; then
 
   cat <<EEE
 
-  /bin/bash node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
+  ./node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
 
 EEE
 
 node -v
 
-  /bin/bash node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
+  ./node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
 
   exit 0
 fi
@@ -606,18 +606,18 @@ bash
   set -x
   echo yarn.lock and package.json are required to run yarn list playwright but lets try  
   npm ls | grep playwright
-  /bin/bash node_modules/.bin/playwright --version
+  ./node_modules/.bin/playwright --version
   node playwright.config.js
   cat <<OOO
 
 value for PLAYWRIGHT_TEST_MATCH >\${PLAYWRIGHT_TEST_MATCH}<  
 fallback to \$(NODE_OPTIONS="" node playwright.config.js | grep testMatch)
 
-  /bin/bash node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
+  ./node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
 
 OOO
   echo =========== inspect =========== ^^
-  /bin/bash node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
+  ./node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
 EEE
 EOF
 )"
