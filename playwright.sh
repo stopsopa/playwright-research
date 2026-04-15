@@ -34,18 +34,15 @@ if [ -f .env.sh ]; then
   source .env.sh
 fi
 
-if [ -f "pnpm-lock.yaml" ]; then
-  echo "DETECTION: pnpm-lock.yaml found, using pnpm"
+if command -v pnpm > /dev/null 2>&1 && [ -f "pnpm-lock.yaml" ]; then
+  echo "DETECTION: pnpm command and pnpm-lock.yaml found, using pnpm"
   PACKAGE="pnpm"
-elif [ -f "yarn.lock" ]; then
-  echo "DETECTION: yarn.lock found, using yarn"
+elif command -v yarn > /dev/null 2>&1 && [ -f "yarn.lock" ]; then
+  echo "DETECTION: yarn command and yarn.lock found, using yarn"
   PACKAGE="yarn"
-elif [ -f "package-lock.json" ]; then
-  echo "DETECTION: package-lock.json found, using npm"
-  PACKAGE="npm"
 else
-  echo "DETECTION: no lock file found, pnpm-lock.yaml or yarn.lock or package-lock.json is required"    
-  exit 1
+  echo "DETECTION: pnpm/yarn or their lock files not found, using npm"
+  PACKAGE="npm"
 fi
 
 node -v 1> /dev/null 2> /dev/null
