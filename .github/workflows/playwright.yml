@@ -17,19 +17,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-latest]
         env_type: [local, docker]
         project: [chromium, firefox]
         include:
-          - os: macos-12
+          - os: macos-latest
             env_type: local
             project: chromium
-          - os: macos-12
+          - os: macos-latest
             env_type: local
             project: firefox
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install dependencies
