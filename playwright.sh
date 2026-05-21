@@ -480,15 +480,17 @@ if [ "${_TARGET}" = "local" ]; then
     exit 1
   fi
 
+  _DISPLAY_ARGS=$(printf '"%s" ' "$@")
+
   cat <<EEE
 
-  ./node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
+  ./node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 ${_DISPLAY_ARGS}
 
 EEE
 
 node -v
 
-  ./node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
+  ./node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 "$@"
 
   exit 0
 fi
@@ -614,6 +616,8 @@ IMAGE="monstersmart/playwright:v${PLAYWRIGHT_VER}-noble-just-chromium"
 
 # PLAYWRIGHT_BROWSERS_PATH="$(${DOCKER_BIN} run -i ${IMAGE} bash -c "echo \$PLAYWRIGHT_BROWSERS_PATH")"
 
+_DISPLAY_ARGS=$(printf '"%s" ' "$@")
+
 CMD="$(cat <<EOF
 cat <<EEE | ${DOCKER_BIN} run -i --rm --ipc host --cap-add SYS_ADMIN --entrypoint="" $S
 ${DOCKERDEFAULTS} $S
@@ -635,11 +639,11 @@ bash
 value for PLAYWRIGHT_TEST_MATCH >\${PLAYWRIGHT_TEST_MATCH}<  
 fallback to \$(NODE_OPTIONS="" node playwright.config.js | grep testMatch)
 
-  ./node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
+  ./node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 ${_DISPLAY_ARGS}
 
 OOO
   echo =========== inspect =========== ^^
-  ./node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 $@
+  ./node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 ${_DISPLAY_ARGS}
 EEE
 EOF
 )"

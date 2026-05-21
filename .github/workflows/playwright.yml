@@ -36,7 +36,7 @@ jobs:
         run: yarn
       - name: Install Playwright browser
         if: matrix.env_type == 'local'
-        run: node node_modules/.bin/playwright install ${{ matrix.project }}
+        run: ./node_modules/.bin/playwright install ${{ matrix.project }}
       - name: Run server
         run: node server.js &
       - name: Run Playwright tests

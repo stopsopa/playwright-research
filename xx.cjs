@@ -25,10 +25,10 @@ cat <<EEE
     \${NODE_API_PROTOCOL}://\${NODE_API_HOST}:\${NODE_API_PORT}
 
   run all in chromium:
-    node node_modules/.bin/playwright test --headed --forbid-only --project=chromium --workers=1  
+    ./node_modules/.bin/playwright test --headed --forbid-only --project=chromium --workers=1  
 
   playwright run all registered browsers:
-    node node_modules/.bin/playwright test --headed --forbid-only 
+    ./node_modules/.bin/playwright test --headed --forbid-only 
     
   inspect mode:  
     # https://playwright.dev/docs/inspector#open-playwright-inspector
@@ -36,14 +36,14 @@ cat <<EEE
     # https://playwright.dev/docs/debug#playwright-inspector
     #	PWDEBUG=console		read more: https://playwright.dev/docs/debug#run-in-debug-mode
     #	DEBUG=pw:api  		read more: https://playwright.dev/docs/debug#verbose-api-logs
-      PWDEBUG=1 node node_modules/.bin/playwright test --headed --forbid-only --project=chromium --workers=1
+      PWDEBUG=1 ./node_modules/.bin/playwright test --headed --forbid-only --project=chromium --workers=1
     
   watch mode:
     # from: https://github.com/microsoft/playwright/issues/7035
-      node node_modules/.bin/chokidar 'tests/**/*.e2e.js' --initial -c 'node node_modules/.bin/playwright test --headed --forbid-only --project=chromium --workers=1 --retries=0 tests/001loading.e2e.js'
+      node node_modules/.bin/chokidar 'tests/**/*.e2e.js' --initial -c './node_modules/.bin/playwright test --headed --forbid-only --project=chromium --workers=1 --retries=0 tests/001loading.e2e.js'
     
   codegen:
-    node node_modules/.bin/playwright codegen wikipedia.org
+    ./node_modules/.bin/playwright codegen wikipedia.org
 
   as a library mode:
     node as-a-lib.js
@@ -57,7 +57,7 @@ EEE
     [`run app`]: {
       command: `
 set -e
-node node_modules/.bin/nodemon server.js
+./node_modules/.bin/nodemon server.js
 `,
       description: `run local app which we are about to test`,
       confirm: false,
