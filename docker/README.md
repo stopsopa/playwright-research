@@ -19,7 +19,36 @@ found info how to build https://github.com/microsoft/playwright/issues/5154#issu
 First determine node version from the target image:
 ```
 
+podman run -it mcr.microsoft.com/playwright:v1.60.0-noble node --version
 docker run -it mcr.microsoft.com/playwright:v1.59.1-noble node --version
+
+```
+
+Then sync upstream main to our fork
+
+```sh
+# pull https://github.com/stopsopa/playwright using /Users/xxxx/Workspace/pull.sh
+git remote add upstream https://github.com/microsoft/playwright.git
+git fetch upstream 
+git checkout main
+git merge upstream/main
+git push origin main
+
+```
+
+Then create local branch from latests tag
+
+```
+
+export LATEST_TAG="v1.60.0"
+
+git checkout -b "${LATEST_TAG}" "tags/${LATEST_TAG}"
+
+git push -u origin "refs/heads/${LATEST_TAG}"
+
+git checkout -b "${LATEST_TAG}-only-chrome-with-core"
+
+git push -u origin "${LATEST_TAG}-only-chrome-with-core"
 
 ```
 
