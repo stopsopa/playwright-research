@@ -1,5 +1,3 @@
-
-
 # docker hub repository
 
 https://hub.docker.com/repository/docker/monstersmart/playwright/general
@@ -12,11 +10,11 @@ https://hub.docker.com/repository/docker/monstersmart/playwright/general
 
 found info how to build https://github.com/microsoft/playwright/issues/5154#issuecomment-767410926
 
->
 > [!CAUTION]
 > See final changes for each consecutive build https://github.com/stopsopa/playwright/pulls
 
 First determine node version from the target image:
+
 ```
 
 podman run -it mcr.microsoft.com/playwright:v1.60.0-noble node --version
@@ -29,7 +27,7 @@ Then sync upstream main to our fork
 ```sh
 # pull https://github.com/stopsopa/playwright using /Users/xxxx/Workspace/pull.sh
 git remote add upstream https://github.com/microsoft/playwright.git
-git fetch upstream 
+git fetch upstream
 git checkout main
 git merge upstream/main
 git push origin main
@@ -50,7 +48,27 @@ git checkout -b "${LATEST_TAG}-only-chrome-with-core"
 
 git push -u origin "${LATEST_TAG}-only-chrome-with-core"
 
+# create branch
+echo "" >> README.md
+git add README.md
+git commit -m "add branch for ${LATEST_TAG}"
+git push
+# and visit
+cat <<EEE
+
+  Name pull request:
+  
+    Building custom ${LATEST_TAG} docker image with just chrome and with /ms-playwright-agent
+
+   https://github.com/stopsopa/playwright/compare/${LATEST_TAG}...stopsopa:playwright:${LATEST_TAG}-only-chrome-with-core
+
+EEE
+
 ```
+
+and create pull request from branch "${LATEST_TAG}-only-chrome-with-core" to "${LATEST_TAG}"
+
+then
 
 look for images https://mcr.microsoft.com/en-us/artifact/mar/playwright/tags
 
