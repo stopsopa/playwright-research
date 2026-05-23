@@ -44,12 +44,35 @@ else
   PACKAGE="npm"
 fi
 
-if command -v docker > /dev/null 2>&1; then
-  DOCKER_BIN="docker"
-  DOCKER_HOST_INTERNAL="host.docker.internal"
-elif command -v podman > /dev/null 2>&1; then
+function set_podman {
   DOCKER_BIN="podman"
   DOCKER_HOST_INTERNAL="host.containers.internal"
+}
+
+function set_docker {
+  DOCKER_BIN="docker"
+  DOCKER_HOST_INTERNAL="host.docker.internal"
+}
+
+if [ "${PLAYWRIGHT_BIN}" = "" ]; then
+  if command -v docker > /dev/null 2>&1; then
+    set_docker
+  elif command -v podman > /dev/null 2>&1; then
+    set_podman
+  else
+    echo "${0} error: no docker or podman available"
+    exit 1
+  fi
+else 
+  if [ "${PLAYWRIGHT_BIN}" != "docker" ] && [ "${PLAYWRIGHT_BIN}" != "podman" ]; then
+    echo "${0} error: PLAYWRIGHT_BIN must be either docker or podman"
+    exit 1
+  fi
+  if [ "${PLAYWRIGHT_BIN}" = "podman" ]; then
+    set_podman
+  else 
+    set_docker
+  fi
 fi
 
 node -v 1> /dev/null 2> /dev/null
@@ -599,6 +622,7 @@ if [ "${_TARGET}" = "docker" ]; then
 extractVersion
 
 # HOMEPAGE FOR THE IMAGE: https://github.com/stopsopa/playwright-research/blob/master/docker/README.md
+# IMAGE="mcr.microsoft.com/playwright:v${PLAYWRIGHT_VER}-noble"
 # IMAGE="mcr.microsoft.com/playwright:v${PLAYWRIGHT_VER}-focal"
 # IMAGE="monstersmart/playwright:v${PLAYWRIGHT_VER}-focal-just-chromium"
 # IMAGE="monstersmart/playwright:v${PLAYWRIGHT_VER}-focal-just-chromium"
