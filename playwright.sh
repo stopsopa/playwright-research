@@ -122,6 +122,7 @@ _TESTAGAINSTHOST="1"
 _DOCKERDEFAULTS="./playwright-docker-defaults.sh"
 _GENDOCKERDEFAULTS="0"
 _GETPLAYWRIGHTVERSION="0"
+_GETPLAYWRIGHTIMAGE="0"
 ENVFILE=".env"
 
 PARAMS=""
@@ -138,6 +139,10 @@ while (( "$#" )); do
       ;;
     --version)
       _GETPLAYWRIGHTVERSION="1";
+      shift;
+      ;;
+    --image)
+      _GETPLAYWRIGHTIMAGE="1";
       shift;
       ;;
     --headless)
@@ -239,6 +244,18 @@ if [ "${_GETPLAYWRIGHTVERSION}" = "1" ]; then
   extractVersion
 
   printf "${PLAYWRIGHT_VER}"
+
+  exit 0;
+fi
+
+if [ "${_GETPLAYWRIGHTIMAGE}" = "1" ]; then
+  set -e
+
+  extractVersion
+
+  IMAGE="monstersmart/playwright:v${PLAYWRIGHT_VER}-noble-just-chromium"
+
+  printf "${IMAGE}"
 
   exit 0;
 fi
@@ -355,6 +372,22 @@ ${YELLOW}/bin/bash playwright.sh ${BOLD}--project all${RESET}${YELLOW} -- ... op
                 this is the same as 
             /bin/bash playwright.sh ${BOLD}--project firefox${RESET} -- ... optionally other native params for playwright
     # shortcut is ${BOLD}-p${RESET}
+
+${YELLOW}/bin/bash playwright.sh ${BOLD}--version${RESET}
+    # prints the playwright version resolved from the locally installed binary:
+    #   ./node_modules/.bin/playwright --version
+    # exits immediately after printing — does not run any tests
+    # example output:
+    #   1.60.0
+
+${YELLOW}/bin/bash playwright.sh ${BOLD}--image${RESET}
+    # prints the full docker image name that would be used when running in ${BOLD}--target docker${RESET} mode
+    # the version part is resolved exactly the same way as ${BOLD}--version${RESET}
+    # exits immediately after printing — does not run any tests
+    # example output:
+    #   monstersmart/playwright:v1.60.0-noble-just-chromium
+    # useful for scripting, e.g. to pull the image before running tests:
+    ${YELLOW}docker pull "\$(${BOLD}/bin/bash playwright.sh --image${RESET}${YELLOW})"${RESET}
 
 ${GREEN}ALL PARAMS BELOW ARE USED ONLY IF playwright.sh IS SWITCHED TO ${BOLD}--target docker${RESET}${GREEN} mode:${RESET}
 
