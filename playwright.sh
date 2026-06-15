@@ -629,7 +629,7 @@ EEE
 EOF
 )"
 
-  printf "\n$CMD\n\n"
+  printf '\n%s\n\n' "${CMD}"
 
   CMD="${CMD//\\$'\n'/}"
 
