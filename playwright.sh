@@ -97,7 +97,7 @@ BG_CYAN=$'\033[46m'
 BG_WHITE=$'\033[47m'
 
 function quote {
-  echo "$1" | sed -E 's/\"/\\"/g'
+  printf '%s\n' "$1" | sed 's/"/\\"/g'
 }
 
 function extractVersion() {
