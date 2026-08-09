@@ -37,7 +37,7 @@ jobs:
       - name: Install Playwright browser
         if: matrix.env_type == 'local'
         run: ./node_modules/.bin/playwright install ${{ matrix.project }}
-      - name: Check what will be mounted to docker
+      - name: Docker mount test
         run: /bin/bash playwright-docker-defaults.sh --test
       - name: Run server
         run: node server.js &

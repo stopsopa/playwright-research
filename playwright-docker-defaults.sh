@@ -4,7 +4,7 @@
 # 
 # in Github actions run as early as possible:
 # 
-#      - name: Check what will be mounted to docker
+#      - name: Docker mount test
 #        run: /bin/bash playwright-docker-defaults.sh --test
 # 
 # Then compare that with running locally:
@@ -18,33 +18,33 @@
 # and even save that file in docker, why not
 # 
 
-COUNT_EXPECTED=56 # <---- adjust that
+COUNT_EXPECTED=53 # <---- adjust that
 
 # ------------- checks -------------------- vvv
 
-LIST="$(find . -maxdepth 1 \
-  \( -type d \( -name node_modules -o -name .git -o -name jasmine -o -name coverage \) -prune \) -o \
-  \( -type d -exec sh -c 'printf "%s/\n" "$1"' _ {} \; -o -type f -print \) |
-sed 's|^\./||' | NODE_OPTIONS="" node gitignore.js playwright-docker-defaults.gitignore | sort)"
-
-COUNT=$(echo "${LIST}" | wc -l | awk '{$1=$1};1')
-
-WRONG_COUNT=0
-if [ "${COUNT}" != "${COUNT_EXPECTED}" ]; then
-    cat <<EEE
-
-${0} error: Expected exactly ${COUNT_EXPECTED} files in the root directory, but found ${COUNT}, review playwright-docker-defaults.gitignore
-
-EEE
-    WRONG_COUNT=1
-fi
-
 FIND_MOUNT="$(
-    printf '%s\n' "$LIST" |
-    sed '/^[[:space:]]*$/d; s|/$||; s|^\(.*\)$|-v "\\$(pwd)/\1:/code/\1" \\|'
+    find . -maxdepth 1 \
+        \( -type d \( -name node_modules -o -name .git -o -name coverage \) -prune \) -o \
+        \( -type d -exec sh -c 'printf "%s/\n" "$1"' _ {} \; -o -type f -print \) |
+    sed 's|^./||' |
+    NODE_OPTIONS="" node gitignore.js playwright-docker-defaults.gitignore |
+    sort |
+    sed '/^[[:space:]]*$/d; s|\(.*\)|-v "$(pwd)/\1:/code/\1" \\|'
 )"
 
+COUNT=$(echo "${FIND_MOUNT}" | wc -l | awk '{$1=$1};1')
+
+ERROR=
+if [ "${COUNT}" != "${COUNT_EXPECTED}" ]; then
+ERROR=$(cat <<EOF
+${0} error: Expected exactly ${COUNT_EXPECTED} files in the root directory, but found ${COUNT}, review playwright-docker-defaults.gitignore
+
+EOF
+  );
+fi
+
 if [ "${1}" = "--test" ]; then
+    if [ "${ERROR}" = "" ] || [ "${FORCE_SUCCESS}" != "" ]; then
     cat <<EEE
 
 ${FIND_MOUNT}
@@ -52,7 +52,15 @@ ${FIND_MOUNT}
 count list: ${COUNT}
 
 EEE
-exit ${WRONG_COUNT};
+        exit 0
+    else
+    cat <<EEE
+
+diff: $(diff --color=always var/playwright-docker-defaults.test <(FORCE_SUCCESS=1 /bin/bash playwright-docker-defaults.sh --test))
+${ERROR}
+EEE
+        exit 1
+    fi
 fi
 
 if [ "$(find . -type d -name node_modules -prune -print | wc -l)" -ne 1 ]; then
@@ -95,7 +103,7 @@ ${MYSQL_DB_CHANGE_DEFAULT} $S
 ${PLAYWRIGHT_TEST_MATCH_DEFAULT} $S
 ${MYSQL_HOST_PASS} $S
 ${FIND_MOUNT}
---env CI=true $S
+--env CI=true
 
 EOF
 

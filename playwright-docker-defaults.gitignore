@@ -1,4 +1,16 @@
 
+node_modules
+package.json
+package-lock.json
+pnpm-lock.yaml
+pnpm-workspace.yaml
+yarn.lock
+/.env
+!/.env.sh
+!/.env.prepare.sh
+!/.env.iter.ts
+!/.env.try
+
 *.md
 *.txt
 *.zip
