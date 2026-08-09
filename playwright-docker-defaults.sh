@@ -1,4 +1,67 @@
 
+# to get gitignore.js https://stopsopa.github.io/gitignore_to_find
+
+# 
+# in Github actions run as early as possible:
+# 
+#      - name: Check what will be mounted to docker
+#        run: /bin/bash playwright-docker-defaults.sh --test
+# 
+# Then compare that with running locally:
+# 
+#       /bin/bash playwright-docker-defaults.sh --test | tee var/playwright-docker-defaults.test
+# 
+# Put var/.gitignore rule 
+# 
+#       !playwright-docker-defaults.test
+# 
+# and even save that file in docker, why not
+# 
+
+COUNT_EXPECTED=56 # <---- adjust that
+
+# ------------- checks -------------------- vvv
+
+LIST="$(find . -maxdepth 1 \
+  \( -type d \( -name node_modules -o -name .git -o -name jasmine -o -name coverage \) -prune \) -o \
+  \( -type d -exec sh -c 'printf "%s/\n" "$1"' _ {} \; -o -type f -print \) |
+sed 's|^\./||' | NODE_OPTIONS="" node gitignore.js playwright-docker-defaults.gitignore | sort)"
+
+COUNT=$(echo "${LIST}" | wc -l | awk '{$1=$1};1')
+
+WRONG_COUNT=0
+if [ "${COUNT}" != "${COUNT_EXPECTED}" ]; then
+    cat <<EEE
+
+${0} error: Expected exactly ${COUNT_EXPECTED} files in the root directory, but found ${COUNT}, review playwright-docker-defaults.gitignore
+
+EEE
+    WRONG_COUNT=1
+fi
+
+FIND_MOUNT="$(
+    printf '%s\n' "$LIST" |
+    sed '/^[[:space:]]*$/d; s|/$||; s|^\(.*\)$|-v "\\$(pwd)/\1:/code/\1" \\|'
+)"
+
+if [ "${1}" = "--test" ]; then
+    cat <<EEE
+
+${FIND_MOUNT}
+
+count list: ${COUNT}
+
+EEE
+exit ${WRONG_COUNT};
+fi
+
+if [ "$(find . -type d -name node_modules -prune -print | wc -l)" -ne 1 ]; then
+    echo "${0} error: Expected exactly one node_modules directory";
+
+    exit 1
+fi
+# ------------- checks -------------------- ^^^
+
 S="\\"
 
 MYSQL_DB_CHANGE_DEFAULT=""
@@ -31,9 +94,8 @@ ${NODE_API_PORT_DEFAULT} $S
 ${MYSQL_DB_CHANGE_DEFAULT} $S
 ${PLAYWRIGHT_TEST_MATCH_DEFAULT} $S
 ${MYSQL_HOST_PASS} $S
--v "\$(pwd)/tests:/code/tests" $S
--v "\$(pwd)/node_modules:/code/node_modules" $S
--v "\$(pwd)/playwright-async.config.js:/code/playwright-async.config.js" $S
--v "\$(pwd)/playwright.config.js:/code/playwright.config.js"
+${FIND_MOUNT}
+--env CI=true $S
+
 EOF
 
