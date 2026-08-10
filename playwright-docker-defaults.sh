@@ -7,9 +7,11 @@
 #      - name: Docker mount test
 #        run: /bin/bash playwright-docker-defaults.sh --test
 # 
+#           WARNING: mount this after pnpm install in the github context
+# 
 # Then compare that with running locally:
 # 
-#       /bin/bash playwright-docker-defaults.sh --test | tee var/playwright-docker-defaults.test
+#       FORCE_SUCCESS=1 /bin/bash playwright-docker-defaults.sh --test | tee var/playwright-docker-defaults.test
 # 
 # Put var/.gitignore rule 
 # 
@@ -18,13 +20,13 @@
 # and even save that file in docker, why not
 # 
 
-COUNT_EXPECTED=53 # <---- adjust that
+COUNT_EXPECTED=61 # <---- adjust that
 
 # ------------- checks -------------------- vvv
 
 FIND_MOUNT="$(
     find . -maxdepth 1 \
-        \( -type d \( -name node_modules -o -name .git -o -name coverage \) -prune \) -o \
+        \( -type d \( -name .git -o -name coverage \) -prune \) -o \
         \( -type d -exec sh -c 'printf "%s/\n" "$1"' _ {} \; -o -type f -print \) |
     sed 's|^./||' |
     NODE_OPTIONS="" node gitignore.js playwright-docker-defaults.gitignore |
