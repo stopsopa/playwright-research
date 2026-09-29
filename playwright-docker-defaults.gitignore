@@ -1,6 +1,5 @@
 
-node_modules
-package.json
+# node_modules - we should mount this dir to playwright image, so don't uncomment it
 package-lock.json
 pnpm-lock.yaml
 pnpm-workspace.yaml
@@ -10,12 +9,14 @@ yarn.lock
 !/.env.prepare.sh
 !/.env.iter.ts
 !/.env.try
+/playwright-report/
 
 *.md
 *.txt
 *.zip
 *.tar.gz
 *.log
+*.e2e.ts
 /__links/
 /.agents/
 /.gemini/
@@ -33,14 +34,14 @@ Dockerfile*
 /dev.sh.ignore
 /docker/
 /docs/
-/playwright.sh
-/playwright*
 /prod.sh
 /skills-lock.json
 /test-results/
 /test-tx.ts
-/var/
+# /var - we should mount var
 /xx.cjs
+/.env.ci
+/node.config.generated.json
 
 
 
