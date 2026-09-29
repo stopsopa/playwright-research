@@ -65,8 +65,20 @@ EEE
     fi
 fi
 
-if [ "$(find . -type d -name node_modules -prune -print | wc -l)" -ne 1 ]; then
-    echo "${0} error: Expected exactly one node_modules directory";
+if [ "$(find . \
+    -path ./docs -prune -o \
+    -path ./var -prune -o \
+    -type d -name node_modules -prune -print | wc -l)" -ne 1 ]; then
+    cat >&2 <<EEE
+${0} error: Expected exactly one node_modules directory
+hint: node_modules directories found:
+
+$(find . -type d -name node_modules -prune -print)
+
+    fetched with :
+        find . -type d -name node_modules -prune -print
+
+EEE
 
     exit 1
 fi
