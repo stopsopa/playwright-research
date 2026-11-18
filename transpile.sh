@@ -10,11 +10,29 @@
 #
 # /bin/bash transpile.sh --watch
 #     # the same but stays running and re-transpiles on every change of generator.ts
+#     # type errors are printed but process keeps running, stop with Ctrl+C
+#     # previous output is not cleared between rebuilds (--preserveWatchOutput)
 #
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 TSC="${DIR}/node_modules/.bin/tsc"
+
+WATCH="0"
+
+# parse arguments - only --watch is supported
+for ARG in "${@}"; do
+
+  if [[ "${ARG}" == "--watch" ]]; then
+
+    WATCH="1"
+  else
+
+    echo "${0} error: unknown argument ARG=>${ARG}<, supported: --watch" >&2
+
+    exit 1
+  fi
+done
 
 if [[ ! -f "${TSC}" ]]; then
 
@@ -25,14 +43,25 @@ fi
 
 cd "${DIR}" || exit 1
 
-"${TSC}" generator.ts \
-  --target es2022 \
-  --module es2022 \
-  --lib es2022,dom,dom.iterable \
-  --strict \
-  --noEmitOnError \
-  --skipLibCheck \
-  "${@}"
+TSC_ARGS=(
+  generator.ts
+  --target es2022
+  --module es2022
+  --lib es2022,dom,dom.iterable
+  --strict
+  --noEmitOnError
+  --skipLibCheck
+)
+
+# watch mode - hand over the process to tsc, it runs until Ctrl+C
+if [[ "${WATCH}" == "1" ]]; then
+
+  echo "${0}: watching generator.ts for changes (Ctrl+C to stop)"
+
+  exec "${TSC}" "${TSC_ARGS[@]}" --watch --preserveWatchOutput
+fi
+
+"${TSC}" "${TSC_ARGS[@]}"
 
 CODE="${?}"
 
