@@ -62,6 +62,32 @@ set -e
       description: `run local app which we are about to test`,
       confirm: false,
     },
+    // serve current directory (project root) over http using python built-in http server
+    serve: {
+      command: `
+set -e
+
+PORT="4286"
+
+echo -e "\\n    http://localhost:\${PORT}\\n"
+
+if python3 -c "import http.server" 2>/dev/null; then
+    echo -e "\\nrunning: python3 -m http.server \${PORT}\\n"
+    python3 -m http.server \${PORT}
+elif python -c "import http.server" 2>/dev/null; then
+    echo -e "\\nrunning: python -m http.server \${PORT}\\n"
+    python -m http.server \${PORT}
+elif python -c "import SimpleHTTPServer" 2>/dev/null; then
+    echo -e "\\nrunning: python -m SimpleHTTPServer \${PORT}\\n"
+    python -m SimpleHTTPServer \${PORT}
+else
+    echo "Python http server module not found"
+    exit 1
+fi
+`,
+      description: `serve everything in this directory via http`,
+      confirm: false,
+    },
     ...setup,
   };
 };
