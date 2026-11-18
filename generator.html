@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>playwright.sh generator</title>
+
+    <!-- tabs: https://stopsopa.github.io/tabs/ -->
+    <link rel="stylesheet" href="https://stopsopa.github.io/tabs/vanilla-tabs.css" />
+
+    <style>
+      /* cloudflare dashboard like theme: gray page, white cards, orange actions, blue links */
+      :root {
+        --orange: #f6821f;
+        --orange-dark: #d96f12;
+        --blue: #0051c3;
+        --text: #313131;
+        --muted: #6b6b6b;
+        --border: #d9d9d9;
+        --bg: #f2f2f2;
+        --card: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+
+      a {
+        color: var(--blue);
+      }
+
+      header {
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .logo {
+          width: 28px;
+          height: 28px;
+          border-radius: 6px;
+          background: var(--orange);
+        }
+
+        h1 {
+          font-size: 18px;
+          font-weight: 600;
+          margin: 0;
+          flex: 1;
+        }
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: minmax(360px, 480px) minmax(0, 1fr);
+        gap: 16px;
+        padding: 16px 24px;
+        align-items: start;
+      }
+
+      @media (max-width: 900px) {
+        main {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 16px;
+        margin-bottom: 16px;
+
+        h2 {
+          font-size: 15px;
+          font-weight: 600;
+          margin: 0 0 12px;
+        }
+      }
+
+      .btn {
+        display: inline-block;
+        background: var(--orange);
+        color: #fff;
+        border: 1px solid var(--orange);
+        border-radius: 4px;
+        padding: 5px 12px;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+
+        &:hover {
+          background: var(--orange-dark);
+          border-color: var(--orange-dark);
+        }
+
+        &.secondary {
+          background: var(--card);
+          color: var(--blue);
+          border-color: var(--blue);
+
+          &:hover {
+            background: #e9f1fb;
+          }
+        }
+      }
+
+      /* segmented radio switch (host / docker) */
+      .switch {
+        display: flex;
+
+        label {
+          flex: 1;
+          text-align: center;
+          padding: 8px;
+          border: 1px solid var(--border);
+          cursor: pointer;
+          font-weight: 600;
+
+          &:first-child {
+            border-radius: 4px 0 0 4px;
+          }
+
+          &:last-child {
+            border-radius: 0 4px 4px 0;
+            border-left: 0;
+          }
+
+          &:has(input:checked) {
+            background: var(--orange);
+            border-color: var(--orange);
+            color: #fff;
+          }
+
+          input {
+            position: absolute;
+            opacity: 0;
+          }
+        }
+      }
+
+      .field {
+        margin-bottom: 12px;
+
+        > label {
+          display: block;
+          font-weight: 600;
+          margin-bottom: 4px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+          width: 100%;
+          padding: 7px 10px;
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          font: inherit;
+
+          &:focus {
+            outline: 2px solid var(--orange);
+            outline-offset: -1px;
+          }
+        }
+
+        small {
+          display: block;
+          color: var(--muted);
+        }
+
+        &.check > label {
+          font-weight: 400;
+          display: flex;
+          gap: 8px;
+          align-items: baseline;
+        }
+
+        input[type="checkbox"] {
+          accent-color: var(--orange);
+        }
+      }
+
+      fieldset {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        margin: 0 0 12px;
+        padding: 12px 12px 0;
+
+        legend {
+          font-weight: 600;
+          color: var(--orange-dark);
+          padding: 0 6px;
+        }
+      }
+
+      .command {
+        margin-bottom: 12px;
+
+        .command-head {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 4px;
+          font-weight: 600;
+        }
+
+        pre {
+          margin: 0;
+          background: #1d1f20;
+          color: #f2f2f2;
+          padding: 10px 12px;
+          border-radius: 4px;
+          white-space: pre-wrap;
+          word-break: break-all;
+          font:
+            13px/1.5 Menlo,
+            Consolas,
+            monospace;
+        }
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      #tabs {
+        [data-vanilla-tabs] {
+          --vanilla-tabs-lines-color: var(--border);
+        }
+
+        [data-buttons] > .active {
+          color: var(--orange-dark);
+          font-weight: 600;
+        }
+
+        ace-editor {
+          display: block;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo"></div>
+      <h1>playwright.sh generator</h1>
+      <a href="https://github.com/stopsopa/playwright-research" data-testid="link-repo">github</a>
+      <a class="btn secondary" href="generator.html" data-testid="reset">Reset</a>
+    </header>
+
+    <main>
+      <form id="form" data-testid="form" autocomplete="off">
+        <div class="card">
+          <h2>Where to run</h2>
+          <div class="switch">
+            <label><input type="radio" name="mode" value="local" data-testid="mode-local" checked /> host machine</label>
+            <label><input type="radio" name="mode" value="docker" data-testid="mode-docker" /> --target docker</label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Commands</h2>
+          <div class="command">
+            <div class="command-head">
+              <span>All tests</span>
+              <button type="button" class="btn" data-copy="cmd-all" data-testid="copy-cmd-all">Copy</button>
+            </div>
+            <pre id="cmd-all" data-testid="cmd-all"></pre>
+          </div>
+          <div class="command">
+            <div class="command-head">
+              <span>Given test file</span>
+              <button type="button" class="btn" data-copy="cmd-file" data-testid="copy-cmd-file">Copy</button>
+            </div>
+            <pre id="cmd-file" data-testid="cmd-file"></pre>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Parameters</h2>
+
+          <div class="field">
+            <label for="file">Test file</label>
+            <input type="text" id="file" name="file" placeholder="tests/example.spec.js" data-testid="file" />
+            <small>used in "Given test file" command</small>
+          </div>
+
+          <div class="field">
+            <label for="project">--project</label>
+            <input type="text" id="project" name="project" list="projects" data-testid="project" />
+            <datalist id="projects">
+              <option value="chromium"></option>
+              <option value="firefox"></option>
+              <option value="webkit"></option>
+              <option value="all"></option>
+            </datalist>
+            <small>default chromium, "all" = every project from playwright.config.js</small>
+          </div>
+
+          <div class="field">
+            <label for="env">--env</label>
+            <input type="text" id="env" name="env" data-testid="env" />
+            <small>env file, default .env</small>
+          </div>
+
+          <div class="field">
+            <label for="workers">--workers</label>
+            <input type="number" min="1" id="workers" name="workers" data-testid="workers" />
+            <small>script adds --workers=1 by default</small>
+          </div>
+
+          <div class="field check" id="field-headless">
+            <label
+              ><input type="checkbox" name="headless" data-testid="headless" /> --headless (script adds --headed by
+              default on host)</label
+            >
+          </div>
+
+          <div class="field check">
+            <label
+              ><input type="checkbox" name="allowOnly" data-testid="allowOnly" /> --allow-only (script adds
+              --forbid-only by default)</label
+            >
+          </div>
+
+          <div class="field">
+            <label for="extra">Extra playwright args</label>
+            <input type="text" id="extra" name="extra" placeholder="--debug --list -g &quot;my test&quot;" data-testid="extra" />
+            <small>passed after -- as they are</small>
+          </div>
+
+          <fieldset id="docker-only">
+            <legend>--target docker only</legend>
+
+            <div class="field">
+              <label for="bin">Container engine</label>
+              <select id="bin" name="bin" data-testid="bin">
+                <option value="auto">autodetect (docker, then podman)</option>
+                <option value="docker">PLAYWRIGHT_BIN=docker</option>
+                <option value="podman">PLAYWRIGHT_BIN=podman</option>
+              </select>
+            </div>
+
+            <div class="field check">
+              <label
+                ><input type="checkbox" name="nohost" data-testid="nohost" /> --nohost (don't point container at server
+                on host machine)</label
+              >
+            </div>
+
+            <div class="field">
+              <label for="dockerDefaults">--docker-defaults</label>
+              <input type="text" id="dockerDefaults" name="dockerDefaults" data-testid="dockerDefaults" />
+              <small>default ./playwright-docker-defaults.sh</small>
+            </div>
+
+            <div class="field">
+              <label for="dockerParams">Extra "docker run" args</label>
+              <input
+                type="text"
+                id="dockerParams"
+                name="dockerParams"
+                placeholder="--name my_container"
+                data-testid="dockerParams"
+              />
+              <small>goes between two -- delimiters; mount of env file is added automatically</small>
+            </div>
+
+            <div class="field check">
+              <label
+                ><input type="checkbox" name="asyncConfig" data-testid="asyncConfig" /> mount
+                playwright-async.config.js (only if the file exists)</label
+              >
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Generated files</legend>
+
+            <div class="field">
+              <label for="testDir">Tests directory</label>
+              <input type="text" id="testDir" name="testDir" data-testid="testDir" />
+            </div>
+
+            <div class="field">
+              <label for="port">Port of tested server (NODE_API_PORT)</label>
+              <input type="number" min="1" id="port" name="port" data-testid="port" />
+            </div>
+          </fieldset>
+        </div>
+      </form>
+
+      <div class="card" id="tabs" data-testid="tabs"></div>
+    </main>
+
+    <!-- ace: https://stopsopa.github.io/ace-editor-webcomponent/learning/008_ace_async_loader/dynamic.html -->
+    <script
+      type="module"
+      src="https://stopsopa.github.io/ace-editor-webcomponent/ace-web-component.js"
+      data-main-ace="https://cdn.jsdelivr.net/npm/ace-builds@1.32.6/src-min-noconflict/ace.js"
+    ></script>
+
+    <!-- generated from generator.ts by: /bin/bash transpile.sh -->
+    <script type="module" src="generator.js"></script>
+
+    <script src="https://stopsopa.github.io/tabs/vanilla-tabs.js?vanilla-tabs-autoenable"></script>
+  </body>
+</html>
