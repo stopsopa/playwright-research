@@ -276,7 +276,7 @@
           <h2>Where to run</h2>
           <div class="switch">
             <label><input type="radio" name="mode" value="local" data-testid="mode-local" checked /> host machine</label>
-            <label><input type="radio" name="mode" value="docker" data-testid="mode-docker" /> --target docker</label>
+            <label><input type="radio" name="mode" value="docker" data-testid="mode-docker" /> --docker</label>
           </div>
         </div>
 
@@ -352,15 +352,24 @@
           </div>
 
           <fieldset id="docker-only">
-            <legend>--target docker only</legend>
+            <legend>--docker only</legend>
 
             <div class="field">
               <label for="bin">Container engine</label>
               <select id="bin" name="bin" data-testid="bin">
                 <option value="auto">autodetect (docker, then podman)</option>
-                <option value="docker">PLAYWRIGHT_BIN=docker</option>
-                <option value="podman">PLAYWRIGHT_BIN=podman</option>
+                <option value="docker">PLAYWRIGHT_DOCKER_BIN=docker</option>
+                <option value="podman">PLAYWRIGHT_DOCKER_BIN=podman</option>
               </select>
+            </div>
+
+            <div class="field">
+              <label for="image">PLAYWRIGHT_IMAGE</label>
+              <input type="text" id="image" name="image" placeholder="mcr.microsoft.com/playwright:v1.63.0-noble" data-testid="image" />
+              <small>
+                default monstersmart/playwright:v[version]-noble-just-chromium (chromium only), check with
+                /bin/bash playwright.sh --image
+              </small>
             </div>
 
             <div class="field check">
@@ -386,13 +395,6 @@
                 data-testid="dockerParams"
               />
               <small>goes between two -- delimiters; mount of env file is added automatically</small>
-            </div>
-
-            <div class="field check">
-              <label
-                ><input type="checkbox" name="asyncConfig" data-testid="asyncConfig" /> mount
-                playwright-async.config.js (only if the file exists)</label
-              >
             </div>
           </fieldset>
 

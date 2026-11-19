@@ -1,38 +1,33 @@
+#
+# Purpose of this script is to provide the same way to launch playwright tests natively
+# on your host machine and, after adding one parameter (--docker), in docker/podman.
+#
+# Script has to be placed in root directory of the project - it does cd to its own directory,
+# so all relative paths (test files, env file) are resolved from there.
+#
+# /bin/bash playwright.sh --help
+#     # full description of all options
+#
+# /bin/bash playwright.sh -- tests/a.spec.js
+#     # one test file on host machine
+#
+# /bin/bash playwright.sh --docker -- tests/a.spec.js
+#     # the same in docker
+#
+# Generator of commands and required files: https://stopsopa.github.io/playwright-research/generator.html
+#
+
 set -o pipefail
-S="\\" # will be used later
 
-# current shell name reliably
-_SHELL="$(ps "${$}" | grep "${$} " | grep -v grep | sed -rn "s/.*[-\/]+(bash|z?sh) .*/\1/p")"; # bash || sh || zsh
-case ${_SHELL} in
-  zsh)
-    _DIR="$( cd "$( dirname "${(%):-%N}" )" && pwd -P )"
-    _0="$( basename "${(%):-%N}" )"
-    _SCRIPT="${(%):-%N}"
-    _BINARY="/bin/zsh"
-    _PWD="$(pwd)"
-    ;;
-  sh)
-    _DIR="$( cd "$( dirname "${0}" )" && pwd -P )"
-    _0="$( basename "${0}" )"
-    _SCRIPT="${0}"
-    _BINARY="/bin/sh"
-    _PWD="$(pwd)"
-    ;;
-  *)
-    _DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd -P )"
-    _0="$( basename "${BASH_SOURCE[0]}" )"
-    _SCRIPT="${BASH_SOURCE[0]}"
-    _BINARY="/bin/bash"
-    _PWD="$(pwd)"
-    ;;
-esac
+S="\\" # used later to build multiline "docker run" command
 
-cd "${_DIR}"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ -f .env.sh ]; then
+cd "${DIR}" || exit 1
+
+if [[ -f .env.sh ]]; then
   source .env.sh
 fi
-
 
 function set_podman {
   DOCKER_BIN="podman"
@@ -44,12 +39,19 @@ function set_docker {
   DOCKER_HOST_INTERNAL="host.docker.internal"
 }
 
-# container engine is needed only in "-t docker" mode, so missing engine is not an error here
-# (local mode, --help, --version, --image have to work on machines without docker/podman).
-# It is reported later, in "-t docker" branch, based on DOCKER_BIN_MISSING
-DOCKER_BIN_MISSING="0"
+# PLAYWRIGHT_BIN is old name of PLAYWRIGHT_DOCKER_BIN, still honoured
+PLAYWRIGHT_DOCKER_BIN="${PLAYWRIGHT_DOCKER_BIN:-${PLAYWRIGHT_BIN}}"
 
-if [ "${PLAYWRIGHT_BIN}" = "" ]; then
+# container engine is needed only in "--docker" mode, so problem with it is not an error here
+# (local mode, --help, --version, --image have to work on machines without docker/podman).
+# It is reported later, in "--docker" branch, based on DOCKER_BIN_ERROR
+DOCKER_BIN_ERROR=""
+
+if [[ "${PLAYWRIGHT_DOCKER_BIN}" == "podman" ]]; then
+  set_podman
+elif [[ "${PLAYWRIGHT_DOCKER_BIN}" == "docker" ]]; then
+  set_docker
+elif [[ "${PLAYWRIGHT_DOCKER_BIN}" == "" ]]; then
   if command -v docker > /dev/null 2>&1; then
     set_docker
   elif command -v podman > /dev/null 2>&1; then
@@ -57,27 +59,11 @@ if [ "${PLAYWRIGHT_BIN}" = "" ]; then
   else
     # fall back to docker names, just to have something to print in --help
     set_docker
-    DOCKER_BIN_MISSING="1"
+    DOCKER_BIN_ERROR="no docker or podman available, required for '--docker' mode"
   fi
 else
-  if [ "${PLAYWRIGHT_BIN}" != "docker" ] && [ "${PLAYWRIGHT_BIN}" != "podman" ]; then
-    echo "${0} error: PLAYWRIGHT_BIN must be either docker or podman"
-    exit 1
-  fi
-  if [ "${PLAYWRIGHT_BIN}" = "podman" ]; then
-    set_podman
-  else 
-    set_docker
-  fi
-fi
-
-node -v 1> /dev/null 2> /dev/null
-
-if [ "${?}" != "0" ]; then
-
-  echo "${0} error: node.js is not available"
-
-  exit 1
+  set_docker
+  DOCKER_BIN_ERROR="PLAYWRIGHT_DOCKER_BIN must be either docker or podman, PLAYWRIGHT_DOCKER_BIN=>${PLAYWRIGHT_DOCKER_BIN}<"
 fi
 
 GRAY=$'\033[38;5;244m'
@@ -93,27 +79,15 @@ BOLD=$'\033[1m'
 REVERSE=$'\033[7m'
 RESET=$'\033[0m'
 
-BG_BLACK=$'\033[40m'
-BG_RED=$'\033[41m'
-BG_GREEN=$'\033[42m'
-BG_YELLOW=$'\033[43m'
-BG_BLUE=$'\033[44m'
-BG_MAGENTA=$'\033[45m'
-BG_CYAN=$'\033[46m'
-BG_WHITE=$'\033[47m'
-
-function quote {
-  printf '%s\n' "$1" | sed 's/"/\\"/g'
-}
-
+# sets PLAYWRIGHT_VER (like 1.60.0) from locally installed playwright
 function extractVersion() {
   local PW_OUTPUT
   local PW_EXIT_CODE
 
   PW_OUTPUT="$(NODE_OPTIONS= ./node_modules/.bin/playwright --version 2>&1)"
-  PW_EXIT_CODE=$?
+  PW_EXIT_CODE="${?}"
 
-  if [ "${PW_EXIT_CODE}" != "0" ]; then
+  if [[ "${PW_EXIT_CODE}" != "0" ]]; then
     printf "%s\n" "${PW_OUTPUT}" >&2
     echo "${0} error: './node_modules/.bin/playwright --version' failed with exit code ${PW_EXIT_CODE}" >&2
     exit "${PW_EXIT_CODE}"
@@ -128,11 +102,40 @@ function extractVersion() {
   fi
 }
 
-_TARGET="local";
-_HELP="0";
-_HEADLESS="--headed"
-_ALLOWONLY="--forbid-only"
-_PROJECT="--project=chromium"
+# sets IMAGE: PLAYWRIGHT_IMAGE env var if given, otherwise default image matching installed playwright version
+function resolveImage() {
+
+  if [[ "${PLAYWRIGHT_IMAGE}" == "" ]]; then
+
+    extractVersion
+
+    # HOMEPAGE FOR THE IMAGE: https://github.com/stopsopa/playwright-research/blob/master/docker/README.md
+    # IMAGE="mcr.microsoft.com/playwright:v${PLAYWRIGHT_VER}-noble"
+    # IMAGE="mcr.microsoft.com/playwright:v${PLAYWRIGHT_VER}-focal"
+    # IMAGE="monstersmart/playwright:v${PLAYWRIGHT_VER}-focal-just-chromium"
+    IMAGE="monstersmart/playwright:v${PLAYWRIGHT_VER}-noble-just-chromium"
+  else
+
+    IMAGE="${PLAYWRIGHT_IMAGE}"
+  fi
+}
+
+# prints error and exits if option given as first argument has no value (second argument)
+function requireValue() {
+
+  if [[ "${2}" == "" ]]; then
+
+    echo "${0} error: ${1} value can't be empty" >&2
+
+    exit 1
+  fi
+}
+
+_TARGET="local"
+_HELP="0"
+_HEADED="1"
+_FORBIDONLY="1"
+_PROJECT="chromium"
 _TESTAGAINSTHOST="1"
 _DOCKERDEFAULTS="./playwright-docker-defaults.sh"
 _GENDOCKERDEFAULTS="0"
@@ -140,519 +143,442 @@ _GETPLAYWRIGHTVERSION="0"
 _GETPLAYWRIGHTIMAGE="0"
 ENVFILE="${ENVFILE:-.env}"
 
-PARAMS=""
-_EVAL=""
-while (( "$#" )); do
-  case "$1" in
+# everything what is not SCRIPT OPTIONS: [DOCKER ARGS] and [PLAYWRIGHT ARGS], split later.
+# Kept in array to pass every argument further exactly as given (spaces, $, quotes ...)
+REST=()
+
+while (( "${#}" )); do
+  case "${1}" in
     -h|--help)
-      _HELP="1";
-      shift;
+      _HELP="1"
+      shift
       ;;
     --generate-playwright-docker-defaults)
-      _GENDOCKERDEFAULTS="1";
-      shift;
+      _GENDOCKERDEFAULTS="1"
+      shift
       ;;
     --version)
-      _GETPLAYWRIGHTVERSION="1";
-      shift;
+      _GETPLAYWRIGHTVERSION="1"
+      shift
       ;;
     --image)
-      _GETPLAYWRIGHTIMAGE="1";
-      shift;
+      _GETPLAYWRIGHTIMAGE="1"
+      shift
       ;;
     --headless)
-      _HEADLESS="";
-      shift;
+      _HEADED="0"
+      shift
       ;;
     --nohost)
-      _TESTAGAINSTHOST="0";
-      shift;
+      _TESTAGAINSTHOST="0"
+      shift
       ;;
     -dd|--docker-defaults)
-      if [ "$2" = "" ]; then
-        echo "$0 error: -dd|--docker-defaults value can't be empty" >&2 
-        exit 1;                                          
-      fi                 
-      if [ ! -f "${_DOCKERDEFAULTS}" ]; then
-        echo "$0 error: -dd|--docker-defaults file '${_DOCKERDEFAULTS}' doesn't exist" >&2 
-        exit 1;                                          
-      fi        
-      _DOCKERDEFAULTS="$2";
-      shift 2;
+      requireValue "-dd|--docker-defaults" "${2}"
+      _DOCKERDEFAULTS="${2}"
+      shift 2
       ;;
     -e|--env)
-      if [ "$2" = "" ]; then
-        echo "$0 error: -e|--env value can't be empty" >&2 
-        exit 1;                                          
-      fi                    
-      if [ ! -f "${2}" ]; then
-        echo "$0 error: -e|--env file '${2}' doesn't exist" >&2 
-        exit 1;                                          
-      fi       
-      ENVFILE="$2";
-      shift 2;
+      requireValue "-e|--env" "${2}"
+      if [[ ! -f "${2}" ]]; then
+        echo "${0} error: -e|--env file >${2}< doesn't exist" >&2
+        exit 1
+      fi
+      ENVFILE="${2}"
+      shift 2
       ;;
     --allow-only)
-      _ALLOWONLY="";
-      shift;
+      _FORBIDONLY="0"
+      shift
       ;;
     -p|--project)
-      if [ "$2" = "all" ]; then                       
-        _PROJECT="";
-      else                                
-        _PROJECT="--project=$2";                                          
-      fi        
-      shift 2;
+      requireValue "-p|--project" "${2}"
+      _PROJECT="${2}"
+      shift 2
       ;;
     -t|--target)
-      if [ "$2" = "" ]; then                           
-        echo "$0 error: -t|--target value can't be empty" >&2 
-        exit 1;                                          
-      fi                              
-      _TARGET="$2";
-      shift 2;
+      requireValue "-t|--target" "${2}"
+      _TARGET="${2}"
+      shift 2
       ;;
-    --) # end argument parsing
-      shift;
-      while (( "$#" )); do          # optional
-        if [ "$1" = "&&" ]; then
-          PARAMS="$PARAMS \&\&"
-          _EVAL="$_EVAL &&"
-        else
-          if [ "$PARAMS" = "" ]; then
-            PARAMS="\"$(quote "$1")\""
-            _EVAL="\"$(quote "$1")\""
-          else
-            PARAMS="$PARAMS \"$(quote "$1")\""
-            _EVAL="$_EVAL \"$(quote "$1")\""
-          fi
-        fi
-        shift;                     
-      done                          
-      break;
+    --docker)
+      _TARGET="docker"
+      shift
       ;;
-    -*|--*=) # unsupported flags
-      echo "$0 error: Unsupported flag $1" >&2
-      exit 1;
+    --) # end of SCRIPT OPTIONS
+      shift
+      REST+=("${@}")
+      break
+      ;;
+    -*) # unsupported flags
+      echo "${0} error: Unsupported flag >${1}<" >&2
+      exit 1
       ;;
     *) # preserve positional arguments
-      if [ "$1" = "&&" ]; then
-          PARAMS="$PARAMS \&\&"
-          _EVAL="$_EVAL &&"
-      else
-        if [ "$PARAMS" = "" ]; then
-            PARAMS="\"$(quote "$1")\""
-            _EVAL="\"$(quote "$1")\""
-        else
-          PARAMS="$PARAMS \"$(quote "$1")\""
-            _EVAL="$_EVAL \"$(quote "$1")\""
-        fi
-      fi
-      shift;
+      REST+=("${1}")
+      shift
       ;;
   esac
 done
 
-if [ "${_GETPLAYWRIGHTVERSION}" = "1" ]; then
-  set -e
+if [[ "${_HELP}" == "1" ]]; then
 
-  extractVersion
+cat <<EOF
 
-  printf "${PLAYWRIGHT_VER}"
+${BOLD}playwright.sh${RESET} - run playwright the same way on host and in ${DOCKER_BIN}
 
-  exit 0;
+Script has to live in root directory of the project. It does cd to its own directory,
+so relative paths (test files, env file) are resolved from there, not from where you call it.
+
+Generator of commands and required files: ${CYAN}https://stopsopa.github.io/playwright-research/generator.html${RESET}
+
+${BOLD}USAGE${RESET}
+    ${YELLOW}/bin/bash playwright.sh          ${GREEN}[SCRIPT OPTIONS]${YELLOW} ${RED}--${YELLOW} ${CYAN}[PLAYWRIGHT ARGS]${RESET}
+    ${YELLOW}/bin/bash playwright.sh --docker ${GREEN}[SCRIPT OPTIONS]${YELLOW} ${RED}--${YELLOW} ${CYAN}[PLAYWRIGHT ARGS]${RESET}
+    ${YELLOW}/bin/bash playwright.sh --docker ${GREEN}[SCRIPT OPTIONS]${YELLOW} ${RED}--${YELLOW} ${MAGENTA}[DOCKER ARGS]${YELLOW} ${RED}--${YELLOW} ${CYAN}[PLAYWRIGHT ARGS]${RESET}
+
+    ${GREEN}SCRIPT OPTIONS${RESET}    before first ${RED}--${RESET}                  consumed by this script, all listed below
+    ${MAGENTA}DOCKER ARGS${RESET}       between two ${RED}--${RESET}, only --docker    passed untouched to "${DOCKER_BIN} run"
+    ${CYAN}PLAYWRIGHT ARGS${RESET}   after last ${RED}--${RESET}                    passed untouched to "playwright test"
+
+${BOLD}QUICK START${RESET}
+    ${YELLOW}/bin/bash playwright.sh${RESET}                          # all tests, host, headed chromium
+    ${YELLOW}/bin/bash playwright.sh -- tests/a.spec.js${RESET}       # one file
+    ${YELLOW}/bin/bash playwright.sh --docker${RESET}                 # all tests in ${DOCKER_BIN}
+    ${YELLOW}/bin/bash playwright.sh --docker -- tests/a.spec.js${RESET}
+
+${BOLD}${GREEN}SCRIPT OPTIONS${RESET}${BOLD} (host and docker)${RESET}
+    -t, --target local|docker   where to run (default: local)
+        --docker                same as --target docker
+    -p, --project NAME|all      browser project (default: chromium), "all" = don't pass --project,
+                                run against all projects from playwright.config.js
+                                WARNING: format is "--project firefox", not "--project=firefox"
+    -e, --env FILE              env file (default: .env)
+        --headless              don't add --headed
+        --allow-only            don't add --forbid-only
+        --version               print playwright version (from ./node_modules/.bin/playwright) and exit
+        --image                 print ${DOCKER_BIN} image name used in --docker mode and exit
+    -h, --help
+
+${BOLD}${GREEN}SCRIPT OPTIONS${RESET}${BOLD} (docker only)${RESET}
+        --nohost                        don't add "--net host" (linux) / "--env NODE_API_HOST=${DOCKER_HOST_INTERNAL}" (mac),
+                                        use it to test something else than server on host machine
+    -dd, --docker-defaults FILE         script printing default ${MAGENTA}DOCKER ARGS${RESET}
+                                        (default: ./playwright-docker-defaults.sh, /dev/null = none)
+        --generate-playwright-docker-defaults   create that file and exit
+
+${BOLD}${CYAN}PLAYWRIGHT ARGS${RESET}
+    Anything "playwright test" accepts: test files, --debug, --list, -g "title", --workers=5 ...
+
+    This script always adds some on its own. To change them:
+
+    added by default      change with            which goes in
+    --headed              --headless             ${GREEN}SCRIPT OPTIONS${RESET}    (host only, docker is always headless)
+    --forbid-only         --allow-only           ${GREEN}SCRIPT OPTIONS${RESET}
+    --project=chromium    --project firefox|all  ${GREEN}SCRIPT OPTIONS${RESET}
+    --workers=1           --workers=5            ${CYAN}PLAYWRIGHT ARGS${RESET}
+
+${BOLD}${MAGENTA}DOCKER ARGS${RESET}
+    Anything "${DOCKER_BIN} run" accepts: -v, --env, --name ...
+    Needs both ${RED}--${RESET} delimiters, also when there are no ${CYAN}PLAYWRIGHT ARGS${RESET}:
+        ${YELLOW}/bin/bash playwright.sh --docker ${RED}--${YELLOW} --name my_container ${RED}--${RESET}
+
+    Added by default (when ${MAGENTA}DOCKER ARGS${RESET} are empty):
+        output of playwright-docker-defaults.sh     what to mount from the project, rarely changes
+        -v "\$(pwd)/.env:/code/.env"                 env file
+
+    ${RED}Rule${RESET}: the moment you pass any ${MAGENTA}DOCKER ARGS${RESET}, the env file mount is NOT added anymore.
+    Add it yourself:
+        ${YELLOW}... --docker ${RED}--${YELLOW} -v "\$(pwd)/.env:/code/.env" --name my_container ${RED}--${YELLOW} --list${RESET}
+    Swap env file for one run:
+        ${YELLOW}... --docker --nohost ${RED}--${YELLOW} -v "\$(pwd)/.env_docker:/code/.env" ${RED}--${RESET}
+
+${BOLD}ENV VARS${RESET}
+    PLAYWRIGHT_DOCKER_BIN=docker|podman   force container engine (default: autodetect, docker first)
+                                          (old name PLAYWRIGHT_BIN still works)
+    PLAYWRIGHT_IMAGE=name:tag             image for --docker mode
+                                          (default: monstersmart/playwright:v[playwright version]-noble-just-chromium,
+                                          it has only chromium - for --project firefox|all provide other image)
+    ENVFILE=FILE                          same as --env
+
+${BOLD}FIRST TIME SETUP (docker)${RESET}
+    ${YELLOW}/bin/bash playwright.sh --generate-playwright-docker-defaults${RESET}
+    ${YELLOW}${DOCKER_BIN} pull "\$(/bin/bash playwright.sh --image)"${RESET}
+
+EOF
+
+  exit 0
+
 fi
 
-if [ "${_GETPLAYWRIGHTIMAGE}" = "1" ]; then
-  set -e
+if [[ "${_TARGET}" != "local" && "${_TARGET}" != "docker" ]]; then
+
+  echo "${0} error: unhandled --target >${_TARGET}<, allowed: local, docker" >&2
+
+  exit 1
+fi
+
+if [[ "${_GENDOCKERDEFAULTS}" == "1" ]]; then
+
+  if [[ -e "${_DOCKERDEFAULTS}" ]]; then
+
+    echo "${0} error: file >${_DOCKERDEFAULTS}< already exists" >&2
+
+    exit 1
+  fi
+
+cat <<'EEE' > "${_DOCKERDEFAULTS}"
+
+# Prints default arguments for "docker run" executed by playwright.sh in --docker mode.
+# Generated by: /bin/bash playwright.sh --generate-playwright-docker-defaults
+# Adjust list of mounts to what your tests need inside container.
+
+S="\\"
+
+PLAYWRIGHT_TEST_MATCH_DEFAULT=""
+if [[ "${PLAYWRIGHT_TEST_MATCH}" != "" ]]; then
+    PLAYWRIGHT_TEST_MATCH_DEFAULT="--env PLAYWRIGHT_TEST_MATCH"
+fi
+
+NODE_API_PORT_DEFAULT=""
+if [[ "${NODE_API_PORT}" != "" ]]; then
+    NODE_API_PORT_DEFAULT="--env NODE_API_PORT"
+fi
+
+# mounted only when exists - mounting not existing file makes docker create directory in its place
+PLAYWRIGHT_ASYNC_CONFIG_DEFAULT=""
+if [[ -f "playwright-async.config.js" ]]; then
+    PLAYWRIGHT_ASYNC_CONFIG_DEFAULT='-v "$(pwd)/playwright-async.config.js:/code/playwright-async.config.js"'
+fi
+
+cat <<EOF
+-w "/code" ${S}
+${NODE_API_PORT_DEFAULT} ${S}
+${PLAYWRIGHT_TEST_MATCH_DEFAULT} ${S}
+-v "\$(pwd)/tests:/code/tests" ${S}
+-v "\$(pwd)/node_modules:/code/node_modules" ${S}
+-v "\$(pwd)/playwright.config.js:/code/playwright.config.js" ${S}
+${PLAYWRIGHT_ASYNC_CONFIG_DEFAULT}
+
+EOF
+
+EEE
+
+  echo "${0}: file >${_DOCKERDEFAULTS}< created"
+
+  exit 0
+fi # end of    if [[ "${_GENDOCKERDEFAULTS}" == "1" ]]; then    condition
+
+if ! command -v node > /dev/null 2>&1; then
+
+  echo "${0} error: node.js is not available" >&2
+
+  exit 1
+fi
+
+if [[ "${_GETPLAYWRIGHTVERSION}" == "1" ]]; then
 
   extractVersion
 
-  IMAGE="monstersmart/playwright:v${PLAYWRIGHT_VER}-noble-just-chromium"
+  printf '%s' "${PLAYWRIGHT_VER}"
 
-  printf "${IMAGE}"
+  exit 0
+fi
 
-  exit 0;
+if [[ "${_GETPLAYWRIGHTIMAGE}" == "1" ]]; then
+
+  resolveImage
+
+  printf '%s' "${IMAGE}"
+
+  exit 0
 fi
 
 export ENVFILE
 # export it for playwright.config.js to read for -t local mode
 
-if [ "${_GENDOCKERDEFAULTS}" = "1" ]; then
+if [[ ! -f "node_modules/.bin/playwright" ]]; then
 
-  if [ -f "${_DOCKERDEFAULTS}" ]; then
+  echo "${0} error: node_modules/.bin/playwright doesn't exist" >&2
 
-      echo "$0 error: file '${_DOCKERDEFAULTS}' already exists" >&2 
-
-      exit 1;                 
-  fi
-
-cat <<EEE > "${_DOCKERDEFAULTS}"
-
-S="\\\\"
-
-PLAYWRIGHT_TEST_MATCH_DEFAULT=""
-if [ "\${PLAYWRIGHT_TEST_MATCH}" != "" ]; then
-    PLAYWRIGHT_TEST_MATCH_DEFAULT="--env PLAYWRIGHT_TEST_MATCH"
-fi   
-
-NODE_API_PORT_DEFAULT=""
-if [ "\${NODE_API_PORT}" != "" ]; then
-    NODE_API_PORT_DEFAULT="--env NODE_API_PORT"
-fi  
-
-cat <<EOF
--w "/code" \$S
-\${NODE_API_PORT_DEFAULT} \$S
-\${PLAYWRIGHT_TEST_MATCH_DEFAULT} \$S
--v "\\\$(pwd)/tests:/code/tests" \$S
--v "\\\$(pwd)/node_modules:/code/node_modules" \$S
--v "\\\$(pwd)/playwright.config.js:/code/playwright.config.js" \$S
--v "\\\$(pwd)/playwright-async.config.js:/code/playwright-async.config.js"
-
-EOF
-
-EEE
-
-    exit 0
-fi # end of    if [ "${_GENDOCKERDEFAULTS}" = "1" ]; then    condition
-
-trim() {
-    local var="$*"
-    # remove leading whitespace characters
-    var="${var#"${var%%[![:space:]]*}"}"
-    # remove trailing whitespace characters
-    var="${var%"${var##*[![:space:]]}"}"
-    echo -n "$var"
-}
-
-if [ "${_HELP}" = "1" ]; then
-
-cat <<EOF
-
-Purpose of this script is to provide the same way to launch test natively on your host machine but also after adding one parameter to launch it in docker/podman exactly the same way.
-
-First you might need to generate file with default parameters for "docker run" internal command (optional: only if you will use "-t docker" mode):
-${YELLOW}/bin/bash playwright.sh ${BOLD}--generate-playwright-docker-defaults${RESET}
-    # to generate config file ./playwright-docker-defaults.sh
-
-    # you might also specify different path for target 
-${YELLOW}/bin/bash playwright.sh --generate-playwright-docker-defaults ${BOLD}--docker-defaults ./playwright-docker-defaults2.sh${RESET}
-    # but from now on you will have to always specify extra parameter (for "-t docker" mode)
-        --docker-defaults ./playwright-docker-defaults2.sh
-    # because by default it is
-        --docker-defaults ./playwright-docker-defaults.sh
-
-    # ${GREEN}NOTICE${RESET}: you might also reset injecting any default params by passing /dev/null and then defining everything manually using double -- delimiters
-        ${YELLOW}/bin/bash playwright.sh -t docker --docker-defaults /dev/null -- [params for "${DOCKER_BIN} run"] -- [params for internal execution of playwright]
-
-${YELLOW}/bin/bash playwright.sh ${BOLD}--env .env_test_against_vite${RESET}${YELLOW} -- --debug tests/e2e/sandbox/img.spec.js${RESET}
-    # by default playwright.sh script reads file .env in search for env vars but you might change it providing -e|--env param
-    # using this option will work for local and docker mode too
-
-${YELLOW}/bin/bash playwright.sh ${BOLD}--target local${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}  
-    # ${BOLD}--target local${RESET} is actually by default, so you don't really need to specify --target to launch on "local"
-    # but you have to specify it if you want to launch test in docker using ${BOLD}--target docker${RESET}
-${YELLOW}/bin/bash playwright.sh ${BOLD}--target docker${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}
-    # shortcut is ${BOLD}-t${RESET}
-
-${YELLOW}/bin/bash playwright.sh ${BOLD}--headless${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}
-    # it's here because ${BOLD}--headed${RESET} is added by default (by default in "--target local" but not in "--target docker")
-    # WARNING: be aware that this params is handled/consumed by this script only 
-
-${YELLOW}/bin/bash playwright.sh ${BOLD}--allow-only${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}
-    # it's here because native playwright cli option ${BOLD}--forbid-only${RESET} is added by default in this script
-    # but not natively, natively in playwright it.only() is allowed by default
-    # this this flag --allow-only is consumed by this bash script in order to bring back default behavior of playwright cli
-    # WARNING: be aware that this params is handled/consumed by this script only  
-
-${YELLOW}/bin/bash playwright.sh -- ${BOLD}--workers=5${RESET}
-    # this will override hardcoded ${BOLD}--workers=1${RESET} (which is added by default)
-
-${YELLOW}/bin/bash playwright.sh ${BOLD}--project firefox${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET} 
-    or
-${YELLOW}/bin/bash playwright.sh ${BOLD}--project all${RESET}${YELLOW} -- ... optionally other native params for playwright${RESET}
-    # WARNING: --project param given to playwright.sh should have format:
-    #               ${BOLD}--project firefox${RESET}
-    #                   not
-    #               ${BOLD}--project=firefox${RESET}
-    # it's here because ${BOLD}--project chromium${RESET} is added by default
-    # ${BOLD}--project firefox${RESET}   - this will change browser to firefox
-    # ${BOLD}--project all${RESET}       - this will launch against all registered browsers (registered in playwright.config.js)
-    #       (this will internally in this bash script force to not pass --project arg to playwright - this way test will be executed against all registered browsers)
-
-    # WARNING: be aware that this params is handled/consumed by this script only  
-        # there is one edge case
-            /bin/bash playwright.sh ${BOLD}--project all${RESET} -- ${BOLD}--project=firefox${RESET} ... optionally other native params for playwright
-                this is the same as 
-            /bin/bash playwright.sh ${BOLD}--project firefox${RESET} -- ... optionally other native params for playwright
-    # shortcut is ${BOLD}-p${RESET}
-
-${YELLOW}/bin/bash playwright.sh ${BOLD}--version${RESET}
-    # prints the playwright version resolved from the locally installed binary:
-    #   ./node_modules/.bin/playwright --version
-    # exits immediately after printing — does not run any tests
-    # example output:
-    #   1.60.0
-
-${YELLOW}/bin/bash playwright.sh ${BOLD}--image${RESET}
-    # prints the full docker image name that would be used when running in ${BOLD}--target docker${RESET} mode
-    # the version part is resolved exactly the same way as ${BOLD}--version${RESET}
-    # exits immediately after printing — does not run any tests
-    # example output:
-    #   monstersmart/playwright:v1.60.0-noble-just-chromium
-    # useful for scripting, e.g. to pull the image before running tests:
-    ${YELLOW}docker pull "\$(${BOLD}/bin/bash playwright.sh --image${RESET}${YELLOW})"${RESET}
-
-${GREEN}ALL PARAMS BELOW ARE USED ONLY IF playwright.sh IS SWITCHED TO ${BOLD}--target docker${RESET}${GREEN} mode:${RESET}
-
-${YELLOW}/bin/bash playwright.sh -t docker ${BOLD}--nohost${RESET} ${YELLOW} -- ... optionally other native params for playwright${RESET}
-    # WARNING: be aware that this params is handled/consumed by this script only  
-    # it is here to explicitly NOT add to "${DOCKER_BIN} run" parameters:
-    # --net host
-    #   or
-    # --env NODE_API_HOST=${DOCKER_HOST_INTERNAL}
-    # depends what OS will be detected
-
-Up to this point you've probably noticed that we are using delimiter ${RED}--${RESET} to separate parameters for playwright.sh script and parameters for playwright itself.
-But in "-t docker" mode we can use TWO pairs of ${RED}--${RESET} delimiter, this way we will have more control over not only playwright but also we will be able to inject some extra parameters to "${DOCKER_BIN} run" itself.
-Example:
-    ${YELLOW}/bin/bash playwright.sh -t docker --nohost ${RED}--${YELLOW} -v "\$(pwd)/.env_docker:/code/.env" ${RED}--${RESET}
-        # this way by using --nohost we will not inject --env NODE_API_HOST=${DOCKER_HOST_INTERNAL} (in MAC case) and we can provide different .env_docker with NODE_API_HOST env var and mount it inside container as /code/.env
-        #    (this might be useful for launching docker tests against external domain - not against server on host/dev machine)
-
-        # ${RED}WARNING${RESET}: important part here is that at the end we have second ${RED}--${RESET}, this way we are clearly indicating that parameter
-        #    -v "\$(pwd)/.env_docker:/code/.env"
-        # is for "${DOCKER_BIN} run"
-        # not for playwright tool executed inside container
-    # Obviously this way we can inject some params to playwright too: 
-    ${YELLOW}/bin/bash playwright.sh -t docker --nohost ${RED}--${YELLOW} -v "\$(pwd)/.env_docker:/code/.env" ${RED}--${YELLOW} --list${RESET}
-        # this way "${DOCKER_BIN} run" will get extra param:
-            -v "\$(pwd)/.env_docker:/code/.env"
-        # and playwright will get
-            --list
-        # ${GREEN}NOTICE${RESET}: It is worth understanding that if one pair of delimiter -- is used then actually 
-            -v "\$(pwd)/.env:/code/.env"
-        # is set by default, and by specifying
-            -v "\$(pwd)/.env_docker:/code/.env"
-        # we are effectively replacing default mounting of .env with mounting .env_docker in it's place instead
-        # another consequence of that is that if you would really want to add any extra parameter beyond those defined in playwright-docker-defaults.sh
-        # but keep -v "\$(pwd)/.env:/code/.env" unchanged it is still necessary to specify -v "\$(pwd)/.env:/code/.env" and extra params like --name after it, like:
-           ${YELLOW}/bin/bash playwright.sh -t docker --nohost ${RED}--${YELLOW} -v "\$(pwd)/.env:/code/.env" --name my_container_name ${RED}--${YELLOW} --list${RESET}
-        
-        # executing 
-           ${YELLOW}/bin/bash playwright.sh -t docker --nohost ${RED}--${YELLOW} --name my_container_name ${RED}--${YELLOW} --list${RESET}
-        # will not work because this way we are not setting .env at all
-
-        # Other way of thinking about it is that params defined in playwright-docker-defaults.sh file are injected separately from mounting .env into container
-        # and this is done deliberately to have more flexibility in injecting different .env files for different purposes without need to manipulate playwright-docker-defaults.sh.
-
-        # Yet another way of thinking is treating playwright-docker-defaults.sh as reversed .gitignore to define what from our project SHOULD be mounted into our container for testing.
-        # By "reversed" .gitignore I meain the fact that .gitignore specifies what should be OMITTED (not included), where playwright-docker-defaults.sh describes what should be MOUNTED into container.
-
-        # So at this point you can see that playwright-docker-defaults.sh and double -- works independently mainly to mount any .env without need to manipulate playwright-docker-defaults.sh
-        # In other words: by design developer is encouraged to use more often double -- delimters to switch different .env files over changing playwright-docker-defaults.sh files - this should be more rare.
-            
-EOF
-
-  exit 0
-
+  exit 1
 fi
 
-PARAMS="$(trim "$PARAMS")"
-_EVAL="$(trim "$_EVAL")"
+# [PLAYWRIGHT ARGS] added by default by this script, see --help how to change each
+PW_DEFAULTS=()
 
-eval set -- "$PARAMS"
+if [[ "${_FORBIDONLY}" == "1" ]]; then
+  PW_DEFAULTS+=(--forbid-only)
+fi
 
-if [ "${_TARGET}" = "local" ]; then
+if [[ "${_PROJECT}" != "all" ]]; then
+  PW_DEFAULTS+=("--project=${_PROJECT}")
+fi
 
-  set -e
+PW_DEFAULTS+=(--workers=1)
 
-  if [ ! -f "node_modules/.bin/playwright" ]; then
+if [[ "${_TARGET}" == "local" ]]; then
 
-    echo "${0} error: node_modules/.bin/playwright doesn't exist"
+  PW_CMD=(./node_modules/.bin/playwright test)
 
-    exit 1
+  if [[ "${_HEADED}" == "1" ]]; then
+    PW_CMD+=(--headed)
   fi
 
-  _DISPLAY_ARGS=$(printf '"%s" ' "$@")
+  PW_CMD+=("${PW_DEFAULTS[@]}" "${REST[@]}")
 
   cat <<EEE
 
-  ./node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 ${_DISPLAY_ARGS}
+  $(printf '%q ' "${PW_CMD[@]}")
 
 EEE
 
-node -v
+  node -v
 
-  ./node_modules/.bin/playwright test ${_HEADLESS} ${_ALLOWONLY} ${_PROJECT} --workers=1 "$@"
+  "${PW_CMD[@]}"
 
-  exit 0
+  exit "${?}"
 fi
 
-if [ "${_TARGET}" = "docker" ]; then
+# ------------------------------------------------------------------ --target docker
 
-  set -e
+if [[ "${DOCKER_BIN_ERROR}" != "" ]]; then
 
-  if [[ "${DOCKER_BIN_MISSING}" == "1" ]]; then
-    echo "${0} error: no docker or podman available, required for '-t docker' mode" >&2
+  echo "${0} error: ${DOCKER_BIN_ERROR}" >&2
+
+  exit 1
+fi
+
+if [[ "${_DOCKERDEFAULTS}" != "/dev/null" && ! -f "${_DOCKERDEFAULTS}" ]]; then
+
+  cat >&2 <<EEE
+${0} error: -dd|--docker-defaults file >${_DOCKERDEFAULTS}< doesn't exist, generate it with:
+
+    /bin/bash playwright.sh --generate-playwright-docker-defaults --docker-defaults "${_DOCKERDEFAULTS}"
+
+EEE
+
+  exit 1
+fi
+
+_HOSTHANDLER=""
+if [[ "${_TESTAGAINSTHOST}" == "1" ]]; then
+  if [[ "${OSTYPE}" == "darwin"* ]]; then
+    _HOSTHANDLER="--env NODE_API_HOST=${DOCKER_HOST_INTERNAL}"
+  else
+    _HOSTHANDLER="--net host"
+  fi
+fi
+
+# handling second -- on the list of arguments vvv
+#   -- [DOCKER ARGS] -- [PLAYWRIGHT ARGS]     -> split on --
+#   -- [PLAYWRIGHT ARGS]                      -> everything for playwright
+DOUBLEDASH="0"
+for ARG in "${REST[@]}"; do
+  if [[ "${ARG}" == "--" ]]; then
+    DOUBLEDASH="1"
+  fi
+done
+
+DOCKER_ARGS=()
+PW_ARGS=()
+
+if [[ "${DOUBLEDASH}" == "1" ]]; then
+  _FOR_DOCKER="1"
+  for ARG in "${REST[@]}"; do
+    if [[ "${ARG}" == "--" ]]; then
+      _FOR_DOCKER="0"
+      continue
+    fi
+    if [[ "${_FOR_DOCKER}" == "1" ]]; then
+      DOCKER_ARGS+=("${ARG}")
+    else
+      PW_ARGS+=("${ARG}")
+    fi
+  done
+else
+  PW_ARGS=("${REST[@]}")
+fi
+# handling second -- on the list of arguments ^^^
+
+# env file is mounted by default only when no [DOCKER ARGS] given, see --help
+if (( "${#DOCKER_ARGS[@]}" == 0 )); then
+
+  if [[ "${ENVFILE}" == /* ]]; then
+    ENVPATH="${ENVFILE}"
+  else
+    ENVPATH="${DIR}/${ENVFILE}"
+  fi
+
+  if [[ ! -f "${ENVPATH}" ]]; then
+
+    echo "${0} error: env file >${ENVPATH}< doesn't exist, can't mount it as /code/.env (use --env FILE or mount it through [DOCKER ARGS])" >&2
+
     exit 1
   fi
 
-  if [ "${_TESTAGAINSTHOST}" = "1" ]; then
-      if [[ "$OSTYPE" == "darwin"* ]]; then
-          _HOSTHANDLER="--env NODE_API_HOST=${DOCKER_HOST_INTERNAL}"
-      else
-          _HOSTHANDLER="--net host"
-      fi
-  fi
+  DOCKER_ARGS=(-v "${ENVPATH}:/code/.env")
+fi
 
-  # handling double -- on the list of arguments vvv
-  DOUBLEDASH="0"
-  for ARG in "$@"; do
-  #   echo ">${ARG}<"
-    if [ "${ARG}" = "--" ]; then
-      DOUBLEDASH="$((${DOUBLEDASH}+1))"
-    fi
-  done
+PASS_NO_HOST=""
+if [[ "${_TESTAGAINSTHOST}" == "0" ]]; then
+  PASS_NO_HOST="--nohost"
+fi
 
-  DOCKER_PARAMS_NOT_QUOTED="-v \"$(pwd)/${ENVFILE}:/code/.env\""
-  PARAMS=""
-  _EVAL=""
-  DOCKER_PARAMS=""
-  DOCKER__EVAL=""
+DOCKER_DEFAULTS="$(/bin/bash "${_DOCKERDEFAULTS}" ${PASS_NO_HOST})"
 
-  if [ "${DOUBLEDASH}" -gt "0" ]; then
-    _FOR_DOCKER="1"
-    for ARG in "$@"; do
-      if [ "${ARG}" = "--" ]; then
-        _FOR_DOCKER="0"
-        continue;
-      fi
-      if [ "${_FOR_DOCKER}" = "1" ]; then
-        if [ "${ARG}" = "&&" ]; then
-            DOCKER_PARAMS="$DOCKER_PARAMS \&\&"
-            DOCKER__EVAL="$DOCKER__EVAL &&"
-            DOCKER_PARAMS_NOT_QUOTED="$DOCKER_PARAMS_NOT_QUOTED \&\&"
-        else
-            if [ "$DOCKER_PARAMS" = "" ]; then
-                DOCKER_PARAMS="\"$(quote "${ARG}")\""
-                DOCKER__EVAL="\"$(quote "${ARG}")\""
-                DOCKER_PARAMS_NOT_QUOTED="${ARG}"
-            else
-                DOCKER_PARAMS="$DOCKER_PARAMS \"$(quote "${ARG}")\""
-                DOCKER__EVAL="$DOCKER__EVAL \"$(quote "${ARG}")\""
-                DOCKER_PARAMS_NOT_QUOTED="$DOCKER_PARAMS_NOT_QUOTED ${ARG}"
-            fi
-        fi
-      else
-        if [ "${ARG}" = "&&" ]; then
-            PARAMS="$PARAMS \&\&"
-            _EVAL="$_EVAL &&"
-        else
-            if [ "$PARAMS" = "" ]; then
-            PARAMS="\"$(quote "${ARG}")\""
-            _EVAL="\"$(quote "${ARG}")\""
-            else
-            PARAMS="$PARAMS \"$(quote "${ARG}")\""
-            _EVAL="$_EVAL \"$(quote "${ARG}")\""
-            fi
-        fi
-      fi
-    done
+if [[ "${?}" != "0" ]]; then
 
-    PARAMS="$(trim "$PARAMS")"
-    _EVAL="$(trim "$_EVAL")"
+  echo "${0} error: executing >${_DOCKERDEFAULTS}< have failed" >&2
 
-    eval set -- "$PARAMS"
+  exit 1
+fi
 
-    # echo "PARAMS>${PARAMS}<"
-    # echo "_EVAL>${_EVAL}<"
-    # echo "DOCKER_PARAMS>${DOCKER_PARAMS}<"
-    # echo "DOCKER__EVAL>${DOCKER__EVAL}<"
-    # echo "DOCKER_PARAMS_NOT_QUOTED>${DOCKER_PARAMS_NOT_QUOTED}<"
+resolveImage
 
-  fi
-  # handling double -- on the list of arguments ^^^
+if [[ "${PLAYWRIGHT_IMAGE}" == "" && "${_PROJECT}" != "chromium" ]]; then
 
-  # set -x # uncomment if you want to see final command
-
-  PASS_NO_HOST=""
-  if [ "${_TESTAGAINSTHOST}" = "0" ]; then
-    PASS_NO_HOST="--nohost"
-  fi
-
-  DOCKER_DEFAULTS="$(/bin/bash "${_DOCKERDEFAULTS}" ${PASS_NO_HOST})"
-
-  if [ "${?}" != "0" ]; then
-
-      echo "${0} error: executing '${_DOCKERDEFAULTS}' have failed";
-
-      exit 1
-  fi
-
-extractVersion
-
-# HOMEPAGE FOR THE IMAGE: https://github.com/stopsopa/playwright-research/blob/master/docker/README.md
-# IMAGE="mcr.microsoft.com/playwright:v${PLAYWRIGHT_VER}-noble"
-# IMAGE="mcr.microsoft.com/playwright:v${PLAYWRIGHT_VER}-focal"
-# IMAGE="monstersmart/playwright:v${PLAYWRIGHT_VER}-focal-just-chromium"
-# IMAGE="monstersmart/playwright:v${PLAYWRIGHT_VER}-focal-just-chromium"
-IMAGE="monstersmart/playwright:v${PLAYWRIGHT_VER}-noble-just-chromium"
-
-
-# testing how to run multiline bash script
-# cat <<EEE | ${DOCKER_BIN} run --rm -i --entrypoint="" \
-# ${IMAGE} \
-# bash
-# ls -la
-# pwd
-# date
-# EEE  
-
-# PLAYWRIGHT_BROWSERS_PATH="$(${DOCKER_BIN} run -i ${IMAGE} bash -c "echo \$PLAYWRIGHT_BROWSERS_PATH")"
-
-_DISPLAY_ARGS=$(printf '"%s" ' "$@")
-
-CMD="$(cat <<EOF
-cat <<EEE | ${DOCKER_BIN} run -i --rm --ipc host --cap-add SYS_ADMIN --entrypoint="" $S
-${DOCKER_DEFAULTS} $S
-${DOCKER_PARAMS_NOT_QUOTED} $S
-${_HOSTHANDLER} $S
-${IMAGE} $S
-bash
-  set -e
-  echo ===========printenv== to see PLAYWRIGHT_TEST_MATCH =========  
-  printenv
-  echo "pwd: >\\\$(pwd)<"
-  ls -la
-  set -x
-  npm ls | grep playwright
-  ./node_modules/.bin/playwright --version
-  node playwright.config.js
-  cat <<OOO
-
-value for PLAYWRIGHT_TEST_MATCH >\${PLAYWRIGHT_TEST_MATCH}<  
-fallback to \$(NODE_OPTIONS="" node playwright.config.js | grep testMatch)
-
-  ./node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 ${_DISPLAY_ARGS}
-
-OOO
-  echo =========== inspect =========== ^^
-  ./node_modules/.bin/playwright test ${_ALLOWONLY} ${_PROJECT} --workers=1 ${_DISPLAY_ARGS}
+  cat >&2 <<EEE
+${YELLOW}
+${0} warning: --project >${_PROJECT}< with default image >${IMAGE}<
+which has only chromium installed, provide image with other browsers through PLAYWRIGHT_IMAGE env var
+${RESET}
 EEE
+fi
+
+PW_CMD=(./node_modules/.bin/playwright test "${PW_DEFAULTS[@]}" "${PW_ARGS[@]}")
+
+# DOCKER_DEFAULTS is a piece of shell code (it contains things like "$(pwd)") and has to go through eval,
+# everything coming from arguments is escaped with %q to survive that eval untouched
+CMD="$(cat <<EOF
+${DOCKER_BIN} run -i --rm --ipc host --cap-add SYS_ADMIN --entrypoint="" ${S}
+${DOCKER_DEFAULTS} ${S}
+$(printf '%q ' "${DOCKER_ARGS[@]}") ${S}
+${_HOSTHANDLER} ${S}
+$(printf '%q' "${IMAGE}") ${S}
+bash -s -- $(printf '%q ' "${PW_CMD[@]}")
 EOF
 )"
 
-  printf '\n%s\n\n' "${CMD}"
+printf '\n%s\n\n' "${CMD}"
 
-  CMD="${CMD//\\$'\n'/}"
+CMD="${CMD//\\$'\n'/}"
 
-  eval "${CMD}"
-    
-  exit 0
-fi # end of    if [ "${_TARGET}" = "docker" ]; then    condition
+# script below is executed inside container, playwright command is passed to it as arguments ("${@}")
+eval "${CMD}" <<'EEE'
+set -e
+echo "pwd: >$(pwd)<"
+ls -la
+echo "===========printenv== to see PLAYWRIGHT_TEST_MATCH ========="
+printenv
+echo "=========== playwright ==========="
+./node_modules/.bin/playwright --version
+echo "value for PLAYWRIGHT_TEST_MATCH >${PLAYWRIGHT_TEST_MATCH}<"
+echo "fallback to $(NODE_OPTIONS="" node playwright.config.js | grep testMatch)"
+echo "=========== run ==========="
+printf '%q ' "${@}"
+printf '\n\n'
+"${@}"
+EEE
 
-echo "${0} error: unhandled --target '${_TARGET}'"
-
-exit 1
+exit "${?}"

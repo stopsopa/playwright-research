@@ -22,7 +22,7 @@ Styled like Cloudflare dashboard: gray page `#f2f2f2`, white cards with 1px bord
 
 - header: title, link to repo, Reset (link to `generator.html` without params)
 - left column (`<form id="form">`):
-  1. **Where to run** - radio `mode`: `local` (host machine) / `docker` (`--target docker`)
+  1. **Where to run** - radio `mode`: `local` (host machine) / `docker` (`--docker`)
   2. **Commands** - two `<pre>` with Copy buttons: all tests, given test file
   3. **Parameters** - inputs listed below
 - right column: `#tabs` - tabs, each with one readonly ace editor
@@ -35,7 +35,7 @@ Each input: `name` attribute = state key in `DEFAULTS` in `generator.ts`. Boolea
 
 | key              | url  | default                           | effect on command                                                       |
 | ---------------- | ---- | --------------------------------- | ----------------------------------------------------------------------- |
-| `mode`           | `m`  | `local`                           | `docker` adds `-t docker`                                               |
+| `mode`           | `m`  | `local`                           | `docker` adds `--docker`                                                |
 | `file`           | `f`  | ``                                | last playwright arg in "given test file" command                        |
 | `project`        | `p`  | `chromium`                        | `--project X` when not default                                          |
 | `env`            | `e`  | `.env`                            | `--env X` when not default                                              |
@@ -43,11 +43,11 @@ Each input: `name` attribute = state key in `DEFAULTS` in `generator.ts`. Boolea
 | `headless`       | `hl` | off                               | `--headless`, host only (hidden in docker)                              |
 | `allowOnly`      | `ao` | off                               | `--allow-only`                                                          |
 | `extra`          | `x`  | ``                                | raw text appended after `--`                                            |
-| `bin`            | `bin`| `auto`                            | docker only: `PLAYWRIGHT_BIN=docker\|podman` prefix                     |
+| `bin`            | `bin`| `auto`                            | docker only: `PLAYWRIGHT_DOCKER_BIN=docker\|podman` prefix              |
 | `nohost`         | `nh` | off                               | docker only: `--nohost`                                                 |
 | `dockerDefaults` | `dd` | `./playwright-docker-defaults.sh` | docker only: `--docker-defaults X` when not default                     |
 | `dockerParams`   | `dp` | ``                                | docker only: raw text between two `--`                                  |
-| `asyncConfig`    | `ac` | off                               | docker only: adds mount of `playwright-async.config.js` to defaults file |
+| `image`          | `img`| ``                                | docker only: `PLAYWRIGHT_IMAGE=X` prefix                                |
 | `testDir`        | `td` | `tests`                           | generated files only                                                    |
 | `port`           | `port`| `3000`                           | generated files only                                                    |
 
@@ -56,7 +56,7 @@ Docker-only inputs sit in one fieldset, hidden in `local` mode.
 ## Command shape
 
 ```
-[PLAYWRIGHT_BIN=x] /bin/bash playwright.sh [-t docker] [--env F] [--project P] [--headless] [--allow-only] [--nohost] [--docker-defaults F] -- [playwright args]
+[PLAYWRIGHT_DOCKER_BIN=x] [PLAYWRIGHT_IMAGE=x] /bin/bash playwright.sh [--docker] [--env F] [--project P] [--headless] [--allow-only] [--nohost] [--docker-defaults F] -- [playwright args]
 ```
 
 With `dockerParams`:

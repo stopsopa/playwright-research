@@ -1,6 +1,13 @@
 # Suggested changes for playwright.sh
 
-Nothing here is applied yet. Review, pick, then ask to implement.
+Status: all applied to `playwright.sh` (and mirrored in generator). Notes on how:
+
+- image override is env var only: `PLAYWRIGHT_IMAGE=... /bin/bash playwright.sh ...` (no `--image-name` flag)
+- improvement 4 (`printenv`): rejected, full `printenv` inside container is fine and stays
+- improvement 10 (`--workers`): default `--workers=1` unchanged, no new option, only documented in help (PLAYWRIGHT ARGS defaults table)
+- improvement 11 (link): help and README link to https://stopsopa.github.io/playwright-research/generator.html
+- args: bash arrays + `printf '%q'`; `eval` stays only because output of `playwright-docker-defaults.sh` is shell code (`$(pwd)`)
+- image alternatives comment kept, other commented-out experiments removed
 
 ## 1. What was asked
 

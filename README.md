@@ -1,3 +1,9 @@
+# playwright.sh generator
+
+Generates the call of [playwright.sh](playwright.sh) (host or `--docker`) and all files it requires:
+
+https://stopsopa.github.io/playwright-research/generator.html
+
 # build custom image
 
 [docker/README.md](docker/README.md)
