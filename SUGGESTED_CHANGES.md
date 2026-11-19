@@ -25,12 +25,13 @@ Proposed layout (man-page like, short top, details lower):
 playwright.sh - run playwright the same way on host and in docker
 
 USAGE
-    /bin/bash playwright.sh [options] -- [playwright args]
-    /bin/bash playwright.sh --docker [options] -- [playwright args]
-    /bin/bash playwright.sh --docker [options] -- [docker run args] -- [playwright args]
+    /bin/bash playwright.sh          [SCRIPT OPTIONS] -- [PLAYWRIGHT ARGS]
+    /bin/bash playwright.sh --docker [SCRIPT OPTIONS] -- [PLAYWRIGHT ARGS]
+    /bin/bash playwright.sh --docker [SCRIPT OPTIONS] -- [DOCKER ARGS] -- [PLAYWRIGHT ARGS]
 
-    Everything before first -- is for this script.
-    Everything after is passed to "playwright test" untouched.
+    SCRIPT OPTIONS    before first --                  consumed by this script, all listed below
+    DOCKER ARGS       between two --, only --docker    passed untouched to "docker run"
+    PLAYWRIGHT ARGS   after last --                    passed untouched to "playwright test"
 
 QUICK START
     /bin/bash playwright.sh                          # all tests, host, headed chromium
@@ -38,13 +39,7 @@ QUICK START
     /bin/bash playwright.sh --docker                 # all tests in docker
     /bin/bash playwright.sh --docker -- tests/a.spec.js
 
-DEFAULTS ADDED BY THIS SCRIPT (and how to turn them off)
-    --headed            off with: --headless            (host only, docker is always headless)
-    --forbid-only       off with: --allow-only
-    --project=chromium  change:   --project firefox | --project all
-    --workers=1         change:   -- --workers=5
-
-OPTIONS (host and docker)
+SCRIPT OPTIONS (host and docker)
     -t, --target local|docker   where to run (default: local)
         --docker                same as --target docker
     -p, --project NAME|all      browser project, "all" = don't pass --project
@@ -55,25 +50,37 @@ OPTIONS (host and docker)
         --image                 print docker image name and exit
     -h, --help
 
-OPTIONS (docker only)
+SCRIPT OPTIONS (docker only)
         --nohost                        don't add "--net host" / NODE_API_HOST=host.docker.internal
-    -dd, --docker-defaults FILE         file printing default "docker run" args
+    -dd, --docker-defaults FILE         file printing default DOCKER ARGS
                                         (default: ./playwright-docker-defaults.sh, /dev/null = none)
         --generate-playwright-docker-defaults   create that file and exit
 
-DOCKER: PASSING ARGS TO "docker run"
-    Use two -- delimiters:
-        /bin/bash playwright.sh --docker -- [docker run args] -- [playwright args]
+PLAYWRIGHT ARGS
+    Anything "playwright test" accepts: test files, --debug, --list, -g "title", --workers=5 ...
 
-    Rule: the moment you pass any docker run args, default mount
-        -v "$(pwd)/.env:/code/.env"
-    is NOT added anymore. Add it yourself:
-        ... -- -v "$(pwd)/.env:/code/.env" --name my_container -- --list
+    This script always adds some on its own. To change them:
+
+    added by default      change with            which goes in
+    --headed              --headless             SCRIPT OPTIONS    (host only, docker is always headless)
+    --forbid-only         --allow-only           SCRIPT OPTIONS
+    --project=chromium    --project firefox|all  SCRIPT OPTIONS
+    --workers=1           --workers=5            PLAYWRIGHT ARGS
+
+DOCKER ARGS
+    Anything "docker run" accepts: -v, --env, --name ...
+    Needs both -- delimiters, also when there are no PLAYWRIGHT ARGS:
+        /bin/bash playwright.sh --docker -- --name my_container --
+
+    Added by default (when DOCKER ARGS are empty):
+        output of playwright-docker-defaults.sh     what to mount from the project, rarely changes
+        -v "$(pwd)/.env:/code/.env"                 env file
+
+    Rule: the moment you pass any DOCKER ARGS, the env file mount is NOT added anymore.
+    Add it yourself:
+        ... --docker -- -v "$(pwd)/.env:/code/.env" --name my_container -- --list
     Swap env file for one run:
-        ... --nohost -- -v "$(pwd)/.env_docker:/code/.env" --
-
-    playwright-docker-defaults.sh = what to mount from the project (rarely changes)
-    double --                     = per-run extras, mostly different .env
+        ... --docker --nohost -- -v "$(pwd)/.env_docker:/code/.env" --
 
 ENV VARS
     PLAYWRIGHT_BIN=docker|podman   force container engine (default: autodetect)
@@ -84,7 +91,13 @@ FIRST TIME SETUP (docker)
     docker pull "$(/bin/bash playwright.sh --image)"
 ```
 
-Key ideas: synopsis first, `--` explained once at the top, defaults in one table, host/docker options as two aligned lists, one short section for double `--`, setup last.
+Key ideas:
+
+- synopsis first, with three named slots: `SCRIPT OPTIONS`, `DOCKER ARGS`, `PLAYWRIGHT ARGS`
+- those three names are the only vocabulary used below: every section is titled with the slot it describes, and every param is listed under the slot it goes in
+- `--` explained once at the top (slot position), never again
+- defaults table says for each default in which slot the override goes
+- setup last
 
 ## 3. Bugs
 
