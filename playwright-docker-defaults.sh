@@ -29,7 +29,7 @@ FIND_MOUNT="$(
         \( -type d \( -name .git -o -name coverage \) -prune \) -o \
         \( -type d -exec sh -c 'printf "%s/\n" "$1"' _ {} \; -o -type f -print \) |
     sed 's|^./||' |
-    NODE_OPTIONS="" node gitignore.js playwright-docker-defaults.gitignore |
+    NODE_OPTIONS="" node gitignore.mjs playwright-docker-defaults.gitignore |
     sort |
     sed '/^[[:space:]]*$/d; s|\(.*\)|-v "$(pwd)/\1:/code/\1" \\|'
 )"
