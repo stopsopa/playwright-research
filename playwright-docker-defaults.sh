@@ -20,7 +20,7 @@
 # and even save that file in docker, why not
 # 
 
-COUNT_EXPECTED=26 # <---- adjust that
+COUNT_EXPECTED=25 # <---- adjust that
 
 # ------------- checks -------------------- vvv
 
