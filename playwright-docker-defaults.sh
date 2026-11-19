@@ -20,7 +20,7 @@
 # and even save that file in docker, why not
 # 
 
-COUNT_EXPECTED=25 # <---- adjust that
+COUNT_EXPECTED=22 # <---- adjust that
 
 # ------------- checks -------------------- vvv
 
@@ -57,6 +57,10 @@ EEE
         exit 0
     else
     cat <<EEE
+
+found (${COUNT}):
+
+${FIND_MOUNT}
 
 diff: $(diff --color=always var/playwright-docker-defaults.test <(FORCE_SUCCESS=1 /bin/bash playwright-docker-defaults.sh --test))
 ${ERROR}

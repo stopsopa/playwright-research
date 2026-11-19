@@ -42,6 +42,9 @@ Dockerfile*
 /xx.cjs
 /.env.ci
 /node.config.generated.json
+# github page generator - not needed for tests (generator.js exists only after transpilation)
+/generator.*
+/transpile.sh
 
 
 
