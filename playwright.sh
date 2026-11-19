@@ -44,16 +44,22 @@ function set_docker {
   DOCKER_HOST_INTERNAL="host.docker.internal"
 }
 
+# container engine is needed only in "-t docker" mode, so missing engine is not an error here
+# (local mode, --help, --version, --image have to work on machines without docker/podman).
+# It is reported later, in "-t docker" branch, based on DOCKER_BIN_MISSING
+DOCKER_BIN_MISSING="0"
+
 if [ "${PLAYWRIGHT_BIN}" = "" ]; then
   if command -v docker > /dev/null 2>&1; then
     set_docker
   elif command -v podman > /dev/null 2>&1; then
     set_podman
   else
-    echo "${0} error: no docker or podman available"
-    exit 1
+    # fall back to docker names, just to have something to print in --help
+    set_docker
+    DOCKER_BIN_MISSING="1"
   fi
-else 
+else
   if [ "${PLAYWRIGHT_BIN}" != "docker" ] && [ "${PLAYWRIGHT_BIN}" != "podman" ]; then
     echo "${0} error: PLAYWRIGHT_BIN must be either docker or podman"
     exit 1
@@ -488,8 +494,8 @@ if [ "${_TARGET}" = "docker" ]; then
 
   set -e
 
-  if [ "${DOCKER_BIN}" = "" ]; then
-    echo "${0} error: docker or podman is not available"
+  if [[ "${DOCKER_BIN_MISSING}" == "1" ]]; then
+    echo "${0} error: no docker or podman available, required for '-t docker' mode" >&2
     exit 1
   fi
 
