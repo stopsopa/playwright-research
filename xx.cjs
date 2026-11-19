@@ -88,6 +88,15 @@ fi
       description: `serve everything in this directory via http`,
       confirm: false,
     },
+    // transpile generator.ts -> generator.js in watch mode (re-transpiles on every change, stop with Ctrl+C)
+    [`transpile watch`]: {
+      command: `
+set -e
+/bin/bash transpile.sh --watch
+`,
+      description: `transpile generator.ts -> generator.js in watch mode`,
+      confirm: false,
+    },
     ...setup,
   };
 };

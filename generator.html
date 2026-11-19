@@ -242,12 +242,18 @@
 
       #tabs {
         [data-vanilla-tabs] {
-          --vanilla-tabs-lines-color: var(--border);
+          --vanilla-tabs-lines-color: #8a8a8a;
+        }
+
+        [data-buttons] > * {
+          color: var(--text);
+          opacity: 1;
+          font-weight: 600;
         }
 
         [data-buttons] > .active {
-          color: var(--orange-dark);
-          font-weight: 600;
+          background: var(--orange);
+          color: #fff;
         }
 
         ace-editor {

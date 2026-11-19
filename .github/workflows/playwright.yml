@@ -49,4 +49,41 @@ jobs:
             /bin/bash playwright.sh -t docker --project ${{ matrix.project }}
           fi
 
+  # builds generator.js from generator.ts and publishes root directory of the project
+  # (generator.html and friends) to github pages. Not executed for pull requests.
+  # Requires: repo Settings -> Pages -> Source: "GitHub Actions"
+  pages:
+    if: github.event_name != 'pull_request'
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}generator.html
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install dependencies
+        run: yarn
+      - name: Transpile generator.ts -> generator.js
+        run: /bin/bash transpile.sh
+      - name: Cleanup before packing (removes big directories, lists what is left)
+        run: /bin/bash .github/cleanup.sh
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - name: Size of final artifact
+        run: /bin/bash .github/artifact-size.sh
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
 # https://playwright.dev/docs/ci
